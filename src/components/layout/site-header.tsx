@@ -28,6 +28,15 @@ export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const [scrolled, setScrolled] = useState(false);
+  // On the homepage the bar floats transparently over the Bay photo until you scroll.
+  const overHero = pathname === "/" && !scrolled && !mobileOpen;
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   useEffect(() => setMobileOpen(false), [pathname]);
   useEffect(() => {
     const close = (e: MouseEvent) => menuRef.current && !menuRef.current.contains(e.target as Node) && setMenuOpen(false);
@@ -45,18 +54,18 @@ export function SiteHeader() {
   const role = session?.user.role;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-navy-100/70 bg-cream-100/85 backdrop-blur-md">
+    <header className={cn("sticky top-0 z-40 transition-colors duration-300", overHero ? "border-b border-transparent bg-transparent" : "border-b border-navy-100/70 bg-cream-100/85 backdrop-blur-md")}>
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-full focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:shadow">
         Skip to content
       </a>
       <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Logo />
+        <Logo light={overHero} />
         <nav aria-label="Primary" className="hidden items-center gap-1 lg:flex">
           {NAV.map((n) => (
             <Link
               key={n.href}
               href={n.href}
-              className={cn("rounded-full px-3.5 py-2 text-sm font-medium text-navy-600 transition hover:bg-white hover:text-navy-800", pathname.startsWith(n.href) && "bg-white text-navy-800 shadow-sm")}
+              className={cn("rounded-full px-3.5 py-2 text-sm font-medium transition", overHero ? "text-white/90 hover:bg-white/15 hover:text-white" : "text-navy-600 hover:bg-white hover:text-navy-800", pathname.startsWith(n.href) && "bg-white text-navy-800 shadow-sm")}
               aria-current={pathname.startsWith(n.href) ? "page" : undefined}
             >
               {n.label}
@@ -71,18 +80,18 @@ export function SiteHeader() {
           )}
           {session ? (
             <>
-              <NotificationBell />
+              <NotificationBell light={overHero} />
               <div className="relative" ref={menuRef}>
                 <button
                   type="button"
                   onClick={() => setMenuOpen((o) => !o)}
-                  className="flex items-center gap-1.5 rounded-full p-1 pr-2 hover:bg-white"
+                  className={cn("flex items-center gap-1.5 rounded-full p-1 pr-2", overHero ? "hover:bg-white/15" : "hover:bg-white")}
                   aria-expanded={menuOpen}
                   aria-haspopup="true"
                   aria-label="Account menu"
                 >
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-navy-800 text-xs font-bold text-white">{initials(session.user.full_name || "U")}</span>
-                  <ChevronDown className="hidden h-4 w-4 text-navy-500 sm:block" aria-hidden="true" />
+                  <span className={cn("flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold", overHero ? "bg-white text-navy-800" : "bg-navy-800 text-white")}>{initials(session.user.full_name || "U")}</span>
+                  <ChevronDown className={cn("hidden h-4 w-4 sm:block", overHero ? "text-white" : "text-navy-500")} aria-hidden="true" />
                 </button>
                 {menuOpen && (
                   <div className="absolute right-0 z-50 mt-2 w-56 animate-fade-up rounded-2xl border border-navy-100 bg-white p-1.5 shadow-lift">
@@ -101,13 +110,13 @@ export function SiteHeader() {
               </div>
             </>
           ) : (
-            <Link href="/auth/sign-in" className="btn-ghost hidden sm:inline-flex">
+            <Link href="/auth/sign-in" className={cn("btn-ghost hidden sm:inline-flex", overHero && "text-white hover:bg-white/15")}>
               Sign In
             </Link>
           )}
           <button
             type="button"
-            className="rounded-full p-2 text-navy-700 hover:bg-white lg:hidden"
+            className={cn("rounded-full p-2 lg:hidden", overHero ? "text-white hover:bg-white/15" : "text-navy-700 hover:bg-white")}
             onClick={() => setMobileOpen((o) => !o)}
             aria-expanded={mobileOpen}
             aria-controls="mobile-nav"

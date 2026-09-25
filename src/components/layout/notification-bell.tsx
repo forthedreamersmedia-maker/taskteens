@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useAsync } from "@/lib/hooks/use-async";
 import { cn, timeAgo } from "@/lib/utils";
 
-export function NotificationBell() {
+export function NotificationBell({ light = false }: { light?: boolean }) {
   const { data, session } = useAuth();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -32,7 +32,7 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="relative rounded-full p-2 text-navy-600 hover:bg-navy-50 hover:text-navy-800"
+        className={cn("relative rounded-full p-2", light ? "text-white hover:bg-white/15" : "text-navy-600 hover:bg-navy-50 hover:text-navy-800")}
         aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`}
         aria-expanded={open}
         aria-haspopup="true"

@@ -21,13 +21,14 @@ export default function HomePage() {
   return (
     <>
       {/* Hero — Bay Area photo background */}
-      <section className="relative isolate overflow-hidden bg-navy-900 text-white">
+      <section className="relative isolate -mt-16 overflow-hidden bg-navy-900 pt-16 text-white">
         <picture>
           <source media="(max-width: 768px)" srcSet="/hero-bay-sm.jpg" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/hero-bay.jpg" alt="View of the San Francisco skyline across the Bay from the East Bay hills" className="absolute inset-0 -z-20 h-full w-full object-cover object-[center_35%]" fetchPriority="high" />
         </picture>
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-r from-navy-900/85 via-navy-900/50 to-navy-900/10" />
+        <div aria-hidden="true" className="absolute inset-x-0 top-0 -z-10 h-32 bg-gradient-to-b from-navy-900/60 to-transparent" />
         <div aria-hidden="true" className="absolute inset-x-0 bottom-0 -z-10 h-40 bg-gradient-to-t from-navy-900/70 to-transparent" />
         <div className="container-page relative grid items-center gap-12 pb-20 pt-14 lg:grid-cols-[1.15fr_1fr] lg:pb-28 lg:pt-24">
           <div className="animate-fade-up">
