@@ -70,7 +70,7 @@ export function RatingSummary({ rating }: { rating?: EmployerRatingSummary }) {
             <span className="text-sm font-medium text-navy-500">· {plural(rating.completed_jobs, "completed job")}</span>
           </p>
           <ul className="mt-2 grid gap-1 text-sm text-navy-700 sm:grid-cols-2">
-            {rows.map(([label, v]) => (
+            {rows.filter(([, v]) => v != null).map(([label, v]) => (
               <li key={label}><span className="font-semibold">{v}%</span> {label}</li>
             ))}
           </ul>

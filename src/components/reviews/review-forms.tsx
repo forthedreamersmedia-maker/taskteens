@@ -11,7 +11,7 @@ import { StarInput, YesNo } from "./ratings";
 const looksLikeContactInfo = (s: string) => /\b\d{3}[-.\s)]*\d{3}[-.\s]*\d{4}\b|@\S+\.\S+|\b\d{1,5}\s+\w+\s+(st|street|ave|avenue|rd|road|blvd|way|dr|drive|ct|court|ln|lane)\b/i.test(s);
 
 /** Teen → public employer rating (aggregates only) + private note for moderators. */
-export function RateEmployerForm({ applicationId, employerName, jobId, onDone }: { applicationId: string; employerName: string; jobId: string; onDone: () => void }) {
+export function RateEmployerForm({ applicationId, employerName, jobId, onDone, volunteer = false }: { applicationId: string; employerName: string; jobId: string; onDone: () => void; volunteer?: boolean }) {
   const data = useData();
   const toast = useToast();
   const [stars, setStars] = useState(0);
@@ -26,12 +26,12 @@ export function RateEmployerForm({ applicationId, employerName, jobId, onDone }:
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stars) return setError("Choose 1 to 5 stars.");
-    if ([paid, matched, safe, respectful].some((v) => v === null)) return setError("Answer all four questions.");
+    if ([volunteer ? true : paid, matched, safe, respectful].some((v) => v === null)) return setError(`Answer all ${volunteer ? "three" : "four"} questions.`);
     if (looksLikeContactInfo(note)) return setError("Please don't include phone numbers, emails or addresses in your note.");
     setError("");
     setBusy(true);
     try {
-      await data.submitEmployerReview(applicationId, { stars, paid_as_promised: !!paid, matched_listing: !!matched, felt_safe: !!safe, respectful: !!respectful, private_note: note });
+      await data.submitEmployerReview(applicationId, { stars, paid_as_promised: volunteer ? null : !!paid, matched_listing: !!matched, felt_safe: !!safe, respectful: !!respectful, private_note: note });
       toast({ tone: "success", title: "Thanks for rating", body: `Your rating helps other teens decide whether to work with ${employerName}.` });
       onDone();
     } catch (err) {
@@ -41,16 +41,16 @@ export function RateEmployerForm({ applicationId, employerName, jobId, onDone }:
     }
   };
 
-  const unsafeOrUnpaid = safe === false || paid === false;
+  const unsafeOrUnpaid = safe === false || (!volunteer && paid === false);
 
   return (
     <form onSubmit={submit} noValidate className="space-y-4">
       <div>
-        <p className="label">Overall, how was working for {employerName}?</p>
+        <p className="label">Overall, how was {volunteer ? "volunteering" : "working"} for {employerName}?</p>
         <StarInput value={stars} onChange={(v) => { setStars(v); setError(""); }} />
       </div>
       <div className="space-y-2">
-        <YesNo name="paid" label="Paid as promised" value={paid} onChange={setPaid} />
+        {!volunteer && <YesNo name="paid" label="Paid as promised" value={paid} onChange={setPaid} />}
         <YesNo name="matched" label="Job matched the listing" value={matched} onChange={setMatched} />
         <YesNo name="safe" label="I felt safe" value={safe} onChange={setSafe} />
         <YesNo name="respectful" label="Respectful communication" value={respectful} onChange={setRespectful} />
@@ -58,7 +58,7 @@ export function RateEmployerForm({ applicationId, employerName, jobId, onDone }:
       {unsafeOrUnpaid && (
         <Alert tone="warn" title="Please also file a private report">
           Ratings don&apos;t alert a moderator on their own.{" "}
-          {paid === false && <><Link href={`/report/payment?job=${jobId}`} className="link">Report a payment problem</Link>{safe === false ? " · " : ""}</>}
+          {!volunteer && paid === false && <><Link href={`/report/payment?job=${jobId}`} className="link">Report a payment problem</Link>{safe === false ? " · " : ""}</>}
           {safe === false && <Link href="/report" className="link">Report a safety concern</Link>}
           {" — "}if you&apos;re in danger, call 911.
         </Alert>

@@ -117,7 +117,7 @@ export default function TeenApplications() {
                   <div><dt className="text-xs text-navy-400">Skills</dt><dd>{a.skills.join(", ")}</dd></div>
                   <div><dt className="text-xs text-navy-400">Résumé</dt><dd>{a.resume_name ?? "None attached"}</dd></div>
                 </dl>
-                {a.status === "selected" && (
+                {a.status === "selected" && a.job.opportunity_type !== "volunteer" && (
                   <p className="mt-4 text-sm text-navy-600">
                     Problem getting paid for this job? <Link href={`/report/payment?job=${a.job_id}`} className="link">Report a payment issue</Link>
                   </p>
@@ -192,6 +192,7 @@ export default function TeenApplications() {
             applicationId={rating.id}
             employerName={rating.employer_name}
             jobId={rating.job_id}
+            volunteer={rating.job.opportunity_type === "volunteer"}
             onDone={() => {
               setRating(null);
               reloadReviews(true);

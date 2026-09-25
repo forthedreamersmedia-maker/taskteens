@@ -51,7 +51,7 @@ export interface DemoDB {
   outbox: EmailLogEntry[];
 }
 
-export const DEMO_DB_VERSION = 6;
+export const DEMO_DB_VERSION = 7;
 
 const day = 86400000;
 const iso = (offsetDays: number) => new Date(Date.now() + offsetDays * day).toISOString();
@@ -103,6 +103,8 @@ function job(j: JobSeed, postedDaysAgo: number): Job {
     required_skills: [],
     preferred_skills: [],
     neighborhood: null,
+    opportunity_type: "job",
+    nonprofit_attested: false,
     service_area: j.city.toLowerCase().replace(/\s+/g, "-"),
     work_mode: "in_person",
     pay_max: null,
@@ -260,6 +262,32 @@ export function buildSeed(): DemoDB {
       responsibilities: ["Help attendees one-on-one with phones and tablets", "Explain things patiently and simply", "Never handle anyone's passwords — coach them to type their own"],
       required_skills: ["Comfortable with iPhone and Android"], preferred_skills: ["Patient teacher"],
     }, 2),
+    job({
+      id: "job_volunteer_creek_cleanup", employer_id: "u_emp_bayside", title: "Creek & park cleanup volunteer", category: "yard-work", city: "Albany",
+      opportunity_type: "volunteer", nonprofit_attested: true,
+      neighborhood: "Albany Hill", pay_min: 0, pay_type: "unpaid", schedule: "One Saturday, 9 am–12 pm", schedule_tags: ["weekend", "morning"], min_age: 14,
+      recurrence: "one_time", start_date: dateOnly(10), openings: 12,
+      description: "Join a community cleanup along the creek path and park. Gloves, grabbers and snacks provided. Adult volunteer leads run check-in and stay with every group. We can sign off on community-service hours for your school.",
+      responsibilities: ["Pick up litter along marked trail sections", "Sort recycling from trash", "Stay with your assigned group"],
+      required_skills: ["Closed-toe shoes"], preferred_skills: ["Bring a friend"],
+    }, 1),
+    job({
+      id: "job_volunteer_homework_club", employer_id: "u_emp_elmwood", title: "Homework club volunteer helper", category: "tutoring", city: "Berkeley",
+      opportunity_type: "volunteer", nonprofit_attested: true,
+      neighborhood: "Elmwood", pay_min: 0, pay_type: "unpaid", schedule: "Mondays 3:30–5 pm", schedule_tags: ["weekday", "afternoon"], min_age: 14, openings: 3,
+      description: "Help elementary students with reading and math practice at our free after-school homework club. Staff coordinators are in the room the whole time. Service-hour forms signed on request.",
+      responsibilities: ["Read with students one-on-one", "Help with worksheets", "Keep the table tidy"],
+      required_skills: ["Patient", "Encouraging"],
+    }, 2),
+    job({
+      id: "job_internship_bookstore", employer_id: "u_emp_plaza", title: "Small-business internship (bookselling & marketing)", category: "restaurant-retail", city: "El Cerrito",
+      opportunity_type: "internship",
+      neighborhood: "El Cerrito Plaza area", pay_min: 400, pay_type: "stipend", schedule: "8 weeks, 5 hrs/week (flexible)", schedule_tags: ["flexible", "weekday"], min_age: 16,
+      recurrence: "recurring", start_date: dateOnly(18), openings: 2,
+      description: "Learn how an independent bookstore runs: ordering, displays, social posts and a small end-of-summer project you present to the owner. Paid stipend for the full 8 weeks, and a reference letter when you finish.",
+      responsibilities: ["Shadow the owner on ordering and inventory", "Design one front-table display", "Plan and post a month of social content", "Present a short final project"],
+      required_skills: ["Curious", "Reliable"], preferred_skills: ["Canva or design basics"],
+    }, 1),
     job({
       id: "job_moving_boxes", employer_id: "u_emp_nguyen", title: "Garage organizing & donation run prep", category: "household-help", city: "Berkeley",
       neighborhood: "North Berkeley", pay_min: 20, pay_type: "hourly", schedule: "One Sunday afternoon, ~4 hours", schedule_tags: ["weekend", "afternoon"], min_age: 15,

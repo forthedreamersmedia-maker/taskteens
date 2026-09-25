@@ -39,9 +39,14 @@ export default function HomePage() {
               Making Job Hunting <span className="text-bay-300">Easier</span> <span className="relative whitespace-nowrap">For Teens<svg aria-hidden="true" viewBox="0 0 300 12" className="absolute -bottom-2 left-0 h-3 w-full text-coral-400"><path d="M2 9c60-6 140-8 296-3" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" /></svg></span>
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-white/85">
-              TaskTeens connects East Bay teenagers with neighborhood families and small businesses who need a hand — tutoring, pet care, café shifts, yard work, tech help and more. Clear pay, clear schedules, safety built in.
+              TaskTeens connects East Bay teenagers with neighborhood families and small businesses who need a hand — paid jobs, internships and volunteer roles in tutoring, pet care, café shifts, yard work, tech help and more. Clear pay, clear schedules, safety built in.
             </p>
             <JobSearchBar className="mt-8 text-navy-800" />
+            <div className="mt-4 flex flex-wrap gap-2 text-sm" aria-label="Browse by type">
+              <Link href="/jobs?type=job" className="rounded-full bg-white/15 px-3.5 py-1.5 font-semibold text-white ring-1 ring-white/25 backdrop-blur hover:bg-white/25">Paid jobs</Link>
+              <Link href="/jobs?type=internship" className="rounded-full bg-white/15 px-3.5 py-1.5 font-semibold text-white ring-1 ring-white/25 backdrop-blur hover:bg-white/25">Internships</Link>
+              <Link href="/jobs?type=volunteer" className="rounded-full bg-white/15 px-3.5 py-1.5 font-semibold text-white ring-1 ring-white/25 backdrop-blur hover:bg-white/25">Volunteering</Link>
+            </div>
             <div className="mt-5 flex flex-wrap items-center gap-3 text-sm">
               <Link href="/auth/sign-up?role=teen" className="btn bg-white text-navy-800 hover:bg-cream-100">I&apos;m a teen — create a profile</Link>
               <Link href="/hire" className="btn text-white hover:bg-white/10">

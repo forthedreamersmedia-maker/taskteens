@@ -24,3 +24,11 @@ export const SUPABASE_ANON_KEY = rawAnonKey ?? "";
 export const SITE_URL = isHttpUrl(rawSiteUrl) ? rawSiteUrl : vercelUrl ? `https://${vercelUrl}` : "http://localhost:3000";
 
 export const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true" || !SUPABASE_URL || !SUPABASE_ANON_KEY;
+
+/**
+ * Cloudflare Turnstile (CAPTCHA). The site key is public. The secret key lives only in
+ * Supabase → Authentication → Attack Protection, which verifies every token server-side.
+ * When unset, no CAPTCHA is shown.
+ */
+export const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
+export const captchaEnabled = !!TURNSTILE_SITE_KEY;

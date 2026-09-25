@@ -53,7 +53,7 @@ function ReviewsAdmin() {
                   </div>
                 </div>
                 <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">
-                  {yn(r.paid_as_promised, "Paid as promised", "Not paid as promised")}
+                  {r.paid_as_promised === null ? <span className="text-navy-400">Volunteer (no pay)</span> : yn(r.paid_as_promised, "Paid as promised", "Not paid as promised")}
                   {yn(r.matched_listing, "Matched listing", "Didn't match listing")}
                   {yn(r.respectful, "Respectful", "Not respectful")}
                   {yn(r.felt_safe, "Felt safe", "Didn't feel safe")}

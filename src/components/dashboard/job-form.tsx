@@ -9,9 +9,9 @@ import { TagInput } from "@/components/ui/tag-input";
 import { useToast } from "@/components/ui/toast";
 import { useData } from "@/lib/auth-context";
 import { useAsync } from "@/lib/hooks/use-async";
-import { CATEGORY_IMAGES, CITIES, NEIGHBORHOODS, SCHEDULE_TAGS, TRANSPORTATION_LABEL } from "@/lib/constants";
+import { CATEGORY_IMAGES, CITIES, NEIGHBORHOODS, OPPORTUNITY_TYPES, SCHEDULE_TAGS, TRANSPORTATION_LABEL } from "@/lib/constants";
 import { useCategories, useServiceAreas } from "@/lib/hooks/use-reference";
-import type { Job, JobInput, JobStatus } from "@/lib/types";
+import type { Job, JobInput, JobStatus, OpportunityType } from "@/lib/types";
 import { fieldErrors, jobSchema, LOW_HOURLY_WARNING_THRESHOLD } from "@/lib/validation";
 import { cn, errorMessage } from "@/lib/utils";
 
@@ -20,6 +20,8 @@ type FormState = Omit<JobInput, "pay_min" | "pay_max" | "min_age" | "openings"> 
 function fromJob(j?: Job | null): FormState {
   return {
     title: j?.title ?? "",
+    opportunity_type: j?.opportunity_type ?? "job",
+    nonprofit_attested: j?.nonprofit_attested ?? false,
     category: j?.category ?? "",
     description: j?.description ?? "",
     responsibilities: j?.responsibilities?.length ? j.responsibilities : [""],
@@ -64,6 +66,18 @@ export function JobForm({ job }: { job?: Job | null }) {
     if (errors[k as string]) setErrors((e) => ({ ...e, [k]: "" }));
   };
   const lowPay = f.pay_type === "hourly" && Number(f.pay_min) > 0 && Number(f.pay_min) < LOW_HOURLY_WARNING_THRESHOLD;
+  const unpaid = f.pay_type === "unpaid";
+  const setType = (t: OpportunityType) => {
+    setF((x) => ({
+      ...x,
+      opportunity_type: t,
+      // Volunteer roles are always unpaid; paid jobs can't be unpaid.
+      pay_type: t === "volunteer" ? "unpaid" : x.pay_type === "unpaid" && t === "job" ? "hourly" : x.pay_type,
+      pay_min: t === "volunteer" ? "0" : x.pay_type === "unpaid" && t === "job" ? "" : x.pay_min,
+      pay_max: t === "volunteer" ? "" : x.pay_max,
+    }));
+    setErrors((e) => ({ ...e, pay_type: "", pay_min: "", nonprofit_attested: "" }));
+  };
   const neighborhoods = useMemo(() => NEIGHBORHOODS[f.city] ?? [], [f.city]);
 
   const onImage = (file?: File) => {
@@ -80,7 +94,9 @@ export function JobForm({ job }: { job?: Job | null }) {
       ...f,
       status,
       responsibilities: f.responsibilities.map((r) => r.trim()).filter(Boolean),
-      pay_max: f.pay_max ? Number(f.pay_max) : null,
+      pay_min: unpaid ? 0 : f.pay_min,
+      pay_max: unpaid ? null : f.pay_max ? Number(f.pay_max) : null,
+      nonprofit_attested: unpaid ? f.nonprofit_attested : false,
       neighborhood: f.neighborhood || null,
       start_date: f.start_date || null,
       deadline: f.deadline || null,
@@ -118,7 +134,18 @@ export function JobForm({ job }: { job?: Job | null }) {
 
       <section className="card space-y-5 p-5 sm:p-6" aria-labelledby="s-basics">
         <h2 id="s-basics" className="text-lg font-bold">The basics</h2>
-        <Field label="Job title" required error={errors.title}><input className="input" value={f.title} onChange={(e) => set("title", e.target.value)} maxLength={90} placeholder="e.g. After-school dog walker" /></Field>
+        <FieldsetGroup legend="What kind of opportunity is this? *">
+          <div className="grid gap-2 sm:grid-cols-3">
+            {OPPORTUNITY_TYPES.map((o) => (
+              <label key={o.value} className={cn("flex cursor-pointer flex-col rounded-2xl border-2 p-3 transition", f.opportunity_type === o.value ? "border-bay-500 bg-bay-50" : "border-navy-100 bg-white hover:border-navy-200")}>
+                <input type="radio" name="opportunity_type" value={o.value} checked={f.opportunity_type === o.value} onChange={() => setType(o.value)} className="sr-only" />
+                <span className="text-sm font-semibold">{o.label}</span>
+                <span className="text-xs text-navy-500">{o.body}</span>
+              </label>
+            ))}
+          </div>
+        </FieldsetGroup>
+        <Field label={f.opportunity_type === "job" ? "Job title" : f.opportunity_type === "internship" ? "Internship title" : "Volunteer role title"} required error={errors.title}><input className="input" value={f.title} onChange={(e) => set("title", e.target.value)} maxLength={90} placeholder="e.g. After-school dog walker" /></Field>
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Category" required error={errors.category}>
             <select className="input" value={f.category} onChange={(e) => set("category", e.target.value)}>
@@ -191,16 +218,38 @@ export function JobForm({ job }: { job?: Job | null }) {
       </section>
 
       <section className="card space-y-5 p-5 sm:p-6" aria-labelledby="s-pay">
-        <h2 id="s-pay" className="text-lg font-bold">Pay &amp; schedule</h2>
-        <div className="grid gap-5 sm:grid-cols-3">
-          <Field label="Pay type" required>
-            <select className="input" value={f.pay_type} onChange={(e) => set("pay_type", e.target.value as FormState["pay_type"])}>
-              <option value="hourly">Hourly</option><option value="flat">Flat rate</option><option value="stipend">Stipend</option>
-            </select>
-          </Field>
-          <Field label={f.pay_type === "hourly" ? "Min $/hr" : "Amount ($)"} required error={errors.pay_min}><input type="number" min={0} step="0.25" inputMode="decimal" className="input" value={f.pay_min} onChange={(e) => set("pay_min", e.target.value)} /></Field>
-          <Field label={f.pay_type === "hourly" ? "Max $/hr" : "Up to ($)"} optional error={errors.pay_max}><input type="number" min={0} step="0.25" inputMode="decimal" className="input" value={f.pay_max} onChange={(e) => set("pay_max", e.target.value)} /></Field>
-        </div>
+        <h2 id="s-pay" className="text-lg font-bold">{f.opportunity_type === "volunteer" ? "Schedule" : "Pay & schedule"}</h2>
+        {f.opportunity_type === "volunteer" ? (
+          <p className="rounded-2xl bg-cream-100 p-3 text-sm text-navy-600">Volunteer roles are unpaid. Many schools accept volunteer work toward community-service hours — mention it in the description if you can sign off on hours.</p>
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-3">
+            <Field label="Pay type" required error={errors.pay_type}>
+              <select className="input" value={f.pay_type} onChange={(e) => set("pay_type", e.target.value as FormState["pay_type"])}>
+                <option value="hourly">Hourly</option><option value="flat">Flat rate</option><option value="stipend">Stipend</option>
+                {f.opportunity_type === "internship" && <option value="unpaid">Unpaid (nonprofits only)</option>}
+              </select>
+            </Field>
+            {!unpaid && (
+              <>
+                <Field label={f.pay_type === "hourly" ? "Min $/hr" : "Amount ($)"} required error={errors.pay_min}><input type="number" min={0} step="0.25" inputMode="decimal" className="input" value={f.pay_min} onChange={(e) => set("pay_min", e.target.value)} /></Field>
+                <Field label={f.pay_type === "hourly" ? "Max $/hr" : "Up to ($)"} optional error={errors.pay_max}><input type="number" min={0} step="0.25" inputMode="decimal" className="input" value={f.pay_max} onChange={(e) => set("pay_max", e.target.value)} /></Field>
+              </>
+            )}
+          </div>
+        )}
+        {unpaid && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <p>
+              TaskTeens only allows unpaid {f.opportunity_type === "volunteer" ? "volunteer roles" : "internships"} from nonprofits, schools, public agencies and community groups.
+              For-profit businesses and households must pay — labor laws generally don&apos;t allow unpaid work for a for-profit employer. This isn&apos;t legal advice; check the rules that apply to you.
+            </p>
+            <label className="mt-3 flex items-start gap-2.5 font-medium">
+              <input type="checkbox" className="mt-0.5 h-4 w-4 accent-bay-500" checked={f.nonprofit_attested} onChange={(e) => set("nonprofit_attested", e.target.checked)} />
+              <span>I confirm this role is with a nonprofit, school, public agency or community group, and no one is being asked to do work that would normally be paid.</span>
+            </label>
+            {errors.nonprofit_attested && <p className="field-error">{errors.nonprofit_attested}</p>}
+          </div>
+        )}
         {lowPay && <Alert tone="warn">This hourly rate may be below local minimum wage. Berkeley, Albany and El Cerrito set their own minimums — please confirm current rates before publishing.</Alert>}
         <Field label="Schedule" required error={errors.schedule} hint="e.g. “Tue & Thu, 3–6 pm” or “One Saturday, ~5 hours”"><input className="input" value={f.schedule} onChange={(e) => set("schedule", e.target.value)} /></Field>
         <FieldsetGroup legend="Schedule tags" hint="Helps teens filter.">

@@ -15,6 +15,7 @@ export function matchesFilters(job: JobWithEmployer, f: JobFilters): boolean {
     const area = SERVICE_AREAS.find((a) => a.slug === f.area);
     if (area && !area.cities.includes(job.city) && job.service_area !== f.area && !(f.area === "remote" && job.work_mode !== "in_person")) return false;
   }
+  if (f.opportunity_type && (job.opportunity_type ?? "job") !== f.opportunity_type) return false;
   if (f.category && job.category !== f.category) return false;
   if (f.recurrence && job.recurrence !== f.recurrence) return false;
   if (f.work_mode && job.work_mode !== f.work_mode) return false;
@@ -45,6 +46,7 @@ export function filtersFromSearchParams(sp: URLSearchParams): JobFilters {
     city: sp.get("city") ?? undefined,
     area: sp.get("area") ?? undefined,
     category: sp.get("category") ?? undefined,
+    opportunity_type: (sp.get("type") as JobFilters["opportunity_type"]) ?? undefined,
     recurrence: (sp.get("recurrence") as JobFilters["recurrence"]) ?? undefined,
     work_mode: (sp.get("mode") as JobFilters["work_mode"]) ?? undefined,
     max_min_age: num("age"),

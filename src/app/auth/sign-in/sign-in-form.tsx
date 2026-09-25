@@ -2,12 +2,13 @@
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Captcha, type CaptchaHandle } from "@/components/auth/captcha";
 import { AuthCard } from "@/components/layout/auth-card";
 import { Field } from "@/components/ui/field";
 import { Alert } from "@/components/ui/feedback";
 import { dashboardPathFor, useAuth } from "@/lib/auth-context";
-import { isDemoMode } from "@/lib/config";
+import { captchaEnabled, isDemoMode } from "@/lib/config";
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "@/lib/data/seed";
 import { errorMessage } from "@/lib/utils";
 
@@ -26,18 +27,23 @@ export function SignInForm() {
   const [show, setShow] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Supabase applies CAPTCHA protection to sign-in too once it's turned on, so production sign-in needs it.
+  const needCaptcha = captchaEnabled && !isDemoMode;
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captcha = useRef<CaptchaHandle>(null);
 
   const doSignIn = async (em: string, pw: string) => {
     setBusy(true);
     setError(null);
     try {
-      const s = await data.signIn(em, pw);
+      const s = await data.signIn(em, pw, captchaToken);
       await refresh();
       const dest = next && !(next.startsWith("/dashboard/employer") && s.user.role !== "employer") && !(next.startsWith("/admin") && s.user.role !== "admin") ? next : dashboardPathFor(s.user.role);
       router.push(dest);
       router.refresh();
     } catch (e) {
       setError(errorMessage(e));
+      captcha.current?.reset();
       setBusy(false);
     }
   };
@@ -45,6 +51,7 @@ export function SignInForm() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return setError("Enter your email and password.");
+    if (needCaptcha && !captchaToken) return setError("Please complete the security check.");
     doSignIn(email, password);
   };
 
@@ -84,6 +91,7 @@ export function SignInForm() {
           <Link href="/auth/forgot-password" className="text-sm font-medium text-bay-600 hover:underline">Forgot password?</Link>
         </div>
         {error && <Alert tone="error">{error}</Alert>}
+        {needCaptcha && <Captcha ref={captcha} action="signin" onToken={setCaptchaToken} />}
         <button type="submit" disabled={busy} className="btn-primary w-full">{busy ? "Signing in…" : "Sign in"}</button>
       </form>
     </AuthCard>

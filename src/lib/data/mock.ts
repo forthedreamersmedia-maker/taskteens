@@ -157,6 +157,7 @@ function withJob(db: DemoDB, a: Application): ApplicationWithJob {
       pay_max: j?.pay_max ?? null,
       pay_type: j?.pay_type ?? "hourly",
       status: j?.status ?? "removed",
+      opportunity_type: j?.opportunity_type ?? "job",
     },
     employer_name: e?.display_name ?? "Employer",
   };
@@ -799,7 +800,7 @@ export function createMockClient(): DataClient {
       if (!Number.isInteger(input.stars) || input.stars < 1 || input.stars > 5) throw new DataError("invalid", "Choose 1 to 5 stars.");
       db.employer_reviews.unshift({
         id: uid("rev"), application_id: a.id, job_id: a.job_id, employer_id: a.employer_id, teen_id: me.id, stars: input.stars,
-        paid_as_promised: input.paid_as_promised, matched_listing: input.matched_listing, felt_safe: input.felt_safe, respectful: input.respectful,
+        paid_as_promised: db.jobs.find((j) => j.id === a.job_id)?.opportunity_type === "volunteer" ? null : !!input.paid_as_promised, matched_listing: input.matched_listing, felt_safe: input.felt_safe, respectful: input.respectful,
         private_note: input.private_note?.trim().slice(0, 1000) || null, status: "published", created_at: now(),
       });
       persist();

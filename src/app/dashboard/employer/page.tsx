@@ -61,7 +61,7 @@ export default function EmployerOverview() {
                         {r.status === "hidden" && <Badge tone="gray">Hidden by moderator</Badge>}
                       </p>
                       <p className="text-xs text-navy-500">
-                        {[r.paid_as_promised ? "Paid as promised" : "Not paid as promised", r.matched_listing ? "Matched listing" : "Didn't match listing", r.respectful ? "Respectful" : "Not respectful", r.felt_safe ? "Felt safe" : "Didn't feel safe"].join(" · ")}
+                        {[r.paid_as_promised === null ? "Volunteer role" : r.paid_as_promised ? "Paid as promised" : "Not paid as promised", r.matched_listing ? "Matched listing" : "Didn't match listing", r.respectful ? "Respectful" : "Not respectful", r.felt_safe ? "Felt safe" : "Didn't feel safe"].join(" · ")}
                         {" · "}{new Date(r.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
                       </p>
                     </div>

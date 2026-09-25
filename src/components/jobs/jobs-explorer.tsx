@@ -8,11 +8,11 @@ import { EmptyState, ErrorState } from "@/components/ui/feedback";
 import { useData } from "@/lib/auth-context";
 import { useAsync } from "@/lib/hooks/use-async";
 import { filtersFromSearchParams } from "@/lib/data/filters";
-import { CITIES, SCHEDULE_TAGS } from "@/lib/constants";
+import { CITIES, OPPORTUNITY_TYPES, SCHEDULE_TAGS } from "@/lib/constants";
 import { useCategories, useServiceAreas } from "@/lib/hooks/use-reference";
 import { cn } from "@/lib/utils";
 
-const FILTER_KEYS = ["q", "city", "area", "category", "recurrence", "mode", "age", "pay_type", "pay_min", "pay_max", "schedule", "posted"];
+const FILTER_KEYS = ["type", "q", "city", "area", "category", "recurrence", "mode", "age", "pay_type", "pay_min", "pay_max", "schedule", "posted"];
 
 export function JobsExplorer() {
   const sp = useSearchParams();
@@ -35,6 +35,9 @@ export function JobsExplorer() {
     router.replace(`${pathname}${next.size ? `?${next}` : ""}`, { scroll: false });
   };
   const clearAll = () => router.replace(pathname, { scroll: false });
+  const type = sp.get("type");
+  const typeTitle = type === "volunteer" ? "Volunteer opportunities" : type === "internship" ? "Internships" : type === "job" ? "Paid local jobs" : "Find local work";
+  const typeNoun: [string, string] = type === "volunteer" ? ["volunteer role", "volunteer roles"] : type === "internship" ? ["internship", "internships"] : type === "job" ? ["job", "jobs"] : ["opportunity", "opportunities"];
   const activeCount = FILTER_KEYS.filter((k) => sp.get(k)).length;
 
   const select = (key: string, label: string, options: { value: string; label: string }[], anyLabel = "Any") => (
@@ -69,7 +72,7 @@ export function JobsExplorer() {
       {select("recurrence", "Job length", [{ value: "one_time", label: "One-time" }, { value: "recurring", label: "Recurring" }])}
       {select("mode", "Work setting", [{ value: "in_person", label: "In person" }, { value: "remote", label: "Remote" }, { value: "hybrid", label: "Hybrid" }])}
       {select("age", "I am", [14, 15, 16, 17, 18, 19].map((a) => ({ value: String(a), label: `${a} years old` })), "Any age")}
-      {select("pay_type", "Pay type", [{ value: "hourly", label: "Hourly" }, { value: "flat", label: "Flat rate" }, { value: "stipend", label: "Stipend" }])}
+      {select("pay_type", "Pay type", [{ value: "hourly", label: "Hourly" }, { value: "flat", label: "Flat rate" }, { value: "stipend", label: "Stipend" }, { value: "unpaid", label: "Unpaid" }])}
       <fieldset>
         <legend className="label text-xs uppercase tracking-wide text-navy-500">Pay range ($)</legend>
         <div className="grid grid-cols-2 gap-2">
@@ -93,9 +96,9 @@ export function JobsExplorer() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="eyebrow">Job marketplace</p>
-          <h1 className="mt-1 text-3xl font-bold sm:text-4xl">Find local work</h1>
+          <h1 className="mt-1 text-3xl font-bold sm:text-4xl">{typeTitle}</h1>
           <p className="mt-1 text-sm text-navy-500" aria-live="polite">
-            {loading ? "Searching…" : `${jobs?.length ?? 0} ${jobs?.length === 1 ? "job" : "jobs"} in the East Bay`}
+            {loading ? "Searching…" : `${jobs?.length ?? 0} ${jobs?.length === 1 ? typeNoun[0] : typeNoun[1]} in the East Bay`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -111,7 +114,18 @@ export function JobsExplorer() {
         </div>
       </div>
 
-      <div className="mt-8 lg:grid lg:grid-cols-[270px_1fr] lg:gap-8">
+      <div role="tablist" aria-label="Opportunity type" className="mt-6 flex gap-1 overflow-x-auto rounded-full bg-white p-1 ring-1 ring-navy-100 sm:inline-flex">
+        {[{ value: "", plural: "All" }, ...OPPORTUNITY_TYPES].map((t) => {
+          const on = (sp.get("type") ?? "") === t.value;
+          return (
+            <button key={t.value || "all"} role="tab" aria-selected={on} onClick={() => set("type", t.value)} className={cn("whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium", on ? "bg-navy-800 text-white" : "text-navy-600 hover:bg-navy-50")}>
+              {t.plural}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-6 lg:grid lg:grid-cols-[270px_1fr] lg:gap-8">
         <aside aria-label="Filters" className="hidden lg:block">
           <div className="card sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto p-5">{panel}</div>
         </aside>
@@ -127,7 +141,7 @@ export function JobsExplorer() {
               </button>
             </div>
             {panelOpen && panel}
-            <button type="button" onClick={() => setPanelOpen(false)} className="btn-primary mt-6 w-full">Show {jobs?.length ?? 0} jobs</button>
+            <button type="button" onClick={() => setPanelOpen(false)} className="btn-primary mt-6 w-full">Show {jobs?.length ?? 0} {typeNoun[1]}</button>
           </div>
         </div>
 
@@ -135,7 +149,7 @@ export function JobsExplorer() {
           {error ? (
             <ErrorState message={error} onRetry={reload} />
           ) : !loading && jobs?.length === 0 ? (
-            <EmptyState icon={SearchX} title="No jobs match those filters" body="Try widening your city, schedule or pay range — new listings are added often." action={activeCount ? { label: "Clear filters", onClick: clearAll } : undefined} />
+            <EmptyState icon={SearchX} title="Nothing matches those filters" body="Try widening your city, schedule or pay range — new listings are added often." action={activeCount ? { label: "Clear filters", onClick: clearAll } : undefined} />
           ) : (
             <JobGrid jobs={jobs} loading={loading} saved={saved} onToggleSave={toggle} />
           )}

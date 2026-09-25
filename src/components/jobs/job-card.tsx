@@ -40,6 +40,8 @@ export function JobCard({ job, saved, onToggleSave, rating }: { job: JobWithEmpl
         <div className="absolute inset-x-3 top-3 z-10 flex items-start justify-between gap-2">
           <div className="flex flex-wrap gap-1.5">
             <Badge tone="cream" className="bg-white/95 ring-0">{categoryName(job.category)}</Badge>
+            {job.opportunity_type === "internship" && <Badge tone="blue" className="ring-0">Internship</Badge>}
+            {job.opportunity_type === "volunteer" && <Badge tone="green" className="ring-0">Volunteer</Badge>}
             {job.is_demo && <DemoBadge />}
           </div>
           <SaveButton saved={saved} onToggle={onToggleSave} label={`${saved ? "Unsave" : "Save"} ${job.title}`} />

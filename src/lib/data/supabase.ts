@@ -26,7 +26,7 @@ import { SITE_URL } from "../config";
 
 const EMPLOYER_COLS = "employer:employer_profiles(user_id,display_name,employer_type,verification_status,city,website,description)";
 const JOB_SELECT = `*, ${EMPLOYER_COLS}`;
-const APP_SELECT = "*, job:jobs(id,title,city,neighborhood,category,image_url,pay_min,pay_max,pay_type,status), employer:employer_profiles(display_name)";
+const APP_SELECT = "*, job:jobs(id,title,city,neighborhood,category,image_url,pay_min,pay_max,pay_type,status,opportunity_type), employer:employer_profiles(display_name)";
 
 type Raw = Record<string, unknown>;
 
@@ -105,14 +105,22 @@ export function createSupabaseClient(): DataClient {
         email: input.email,
         password: input.password,
         // role is read by the handle_new_user trigger, which only accepts teen|employer
-        options: { data: { full_name: input.full_name, role: input.role }, emailRedirectTo: `${SITE_URL}/auth/callback?next=/dashboard` },
+        options: {
+          data: { full_name: input.full_name, role: input.role },
+          emailRedirectTo: `${SITE_URL}/auth/callback?next=/dashboard`,
+          captchaToken: input.captchaToken ?? undefined,
+        },
       });
-      if (error) fail(error);
+      if (error) {
+        if (/captcha/i.test(error.message)) throw new DataError("captcha", "The security check didn't go through. Please try it again.");
+        fail(error);
+      }
       return { needsEmailVerification: !data.session };
     },
-    async signIn(email, password) {
-      const { error } = await sb.auth.signInWithPassword({ email, password });
+    async signIn(email, password, captchaToken) {
+      const { error } = await sb.auth.signInWithPassword({ email, password, options: { captchaToken: captchaToken ?? undefined } });
       if (error) {
+        if (/captcha/i.test(error.message)) throw new DataError("captcha", "The security check didn't go through. Please try it again.");
         if (/confirm/i.test(error.message)) throw new DataError("unverified", "Please confirm your email first — check your inbox for the verification link.");
         throw new DataError("invalid", "That email and password don't match.");
       }
@@ -126,9 +134,12 @@ export function createSupabaseClient(): DataClient {
     async signOut() {
       await sb.auth.signOut();
     },
-    async requestPasswordReset(email) {
-      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: `${SITE_URL}/auth/callback?next=/auth/reset-password` });
-      if (error) fail(error);
+    async requestPasswordReset(email, captchaToken) {
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: `${SITE_URL}/auth/callback?next=/auth/reset-password`, captchaToken: captchaToken ?? undefined });
+      if (error) {
+        if (/captcha/i.test(error.message)) throw new DataError("captcha", "The security check didn't go through. Please try it again.");
+        fail(error);
+      }
     },
     async updatePassword(password) {
       const { error } = await sb.auth.updateUser({ password });
@@ -161,6 +172,7 @@ export function createSupabaseClient(): DataClient {
     async searchJobs(filters) {
       let q = sb.from("jobs").select(JOB_SELECT).eq("status", "published").eq("moderation_status", "approved").limit(200);
       if (filters.category) q = q.eq("category", filters.category);
+      if (filters.opportunity_type) q = q.eq("opportunity_type", filters.opportunity_type);
       if (filters.city) q = q.eq("city", filters.city);
       if (filters.recurrence) q = q.eq("recurrence", filters.recurrence);
       if (filters.work_mode) q = q.eq("work_mode", filters.work_mode);
@@ -549,7 +561,7 @@ export function createSupabaseClient(): DataClient {
     },
     async submitEmployerReview(applicationId, input) {
       const { error } = await sb.rpc("submit_employer_review", {
-        p_application: applicationId, p_stars: input.stars, p_paid: input.paid_as_promised, p_matched: input.matched_listing,
+        p_application: applicationId, p_stars: input.stars, p_paid: input.paid_as_promised ?? null, p_matched: input.matched_listing,
         p_safe: input.felt_safe, p_respectful: input.respectful, p_note: input.private_note ?? null,
       });
       if (error) fail(error);

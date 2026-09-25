@@ -8,7 +8,9 @@ export type JobStatus = "draft" | "published" | "paused" | "closed" | "removed";
 export type ModerationStatus = "pending" | "approved" | "rejected";
 export type Recurrence = "one_time" | "recurring";
 export type WorkMode = "in_person" | "remote" | "hybrid";
-export type PayType = "hourly" | "flat" | "stipend";
+export type PayType = "hourly" | "flat" | "stipend" | "unpaid";
+/** job = paid work · internship = learning-focused role (paid, or unpaid at a nonprofit) · volunteer = unpaid service for a nonprofit/school/public/community group */
+export type OpportunityType = "job" | "internship" | "volunteer";
 export type Transportation = "none_needed" | "transit_accessible" | "bike_or_walk" | "own_transportation" | "employer_provides";
 
 export type ApplicationStatus =
@@ -76,6 +78,9 @@ export interface Job {
   id: string;
   employer_id: string;
   title: string;
+  opportunity_type: OpportunityType;
+  /** Employer confirmed the host is a nonprofit, school, public agency or community group (required for unpaid listings). */
+  nonprofit_attested: boolean;
   category: string; // category slug
   description: string;
   responsibilities: string[];
@@ -143,7 +148,7 @@ export interface Application {
 }
 
 export interface ApplicationWithJob extends Application {
-  job: Pick<Job, "id" | "title" | "city" | "neighborhood" | "category" | "image_url" | "pay_min" | "pay_max" | "pay_type" | "status">;
+  job: Pick<Job, "id" | "title" | "city" | "neighborhood" | "category" | "image_url" | "pay_min" | "pay_max" | "pay_type" | "status" | "opportunity_type">;
   employer_name: string;
 }
 
@@ -257,7 +262,7 @@ export interface EmployerReview {
   employer_id: string;
   teen_id: string;
   stars: number; // 1-5
-  paid_as_promised: boolean;
+  paid_as_promised: boolean | null; // null for volunteer roles
   matched_listing: boolean;
   felt_safe: boolean;
   respectful: boolean;
@@ -271,7 +276,7 @@ export interface EmployerReviewForEmployer {
   id: string;
   job_title: string;
   stars: number;
-  paid_as_promised: boolean;
+  paid_as_promised: boolean | null;
   matched_listing: boolean;
   felt_safe: boolean;
   respectful: boolean;
@@ -308,7 +313,7 @@ export interface EmployerRatingSummary {
 
 export interface EmployerReviewInput {
   stars: number;
-  paid_as_promised: boolean;
+  paid_as_promised: boolean | null;
   matched_listing: boolean;
   felt_safe: boolean;
   respectful: boolean;
@@ -365,6 +370,7 @@ export interface EmailLogEntry {
 
 export interface JobFilters {
   q?: string;
+  opportunity_type?: OpportunityType | "";
   city?: string;
   area?: string;
   category?: string;
@@ -408,6 +414,8 @@ export interface SignUpInput {
   password: string;
   full_name: string;
   role: Exclude<Role, "admin">;
+  /** Cloudflare Turnstile token, verified by Supabase Auth when CAPTCHA protection is on. */
+  captchaToken?: string | null;
 }
 
 export interface EmployerOnboardingInput {

@@ -16,8 +16,9 @@ export function uid(prefix = ""): string {
 
 const money = (n: number) => (Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`);
 
-export function formatPay(job: Pick<Job, "pay_min" | "pay_max" | "pay_type">): string {
-  const suffix: Record<PayType, string> = { hourly: "/hr", flat: " flat", stipend: " stipend" };
+export function formatPay(job: Pick<Job, "pay_min" | "pay_max" | "pay_type"> & { opportunity_type?: Job["opportunity_type"] }): string {
+  if (job.pay_type === "unpaid") return job.opportunity_type === "volunteer" ? "Volunteer" : "Unpaid";
+  const suffix: Record<PayType, string> = { hourly: "/hr", flat: " flat", stipend: " stipend", unpaid: "" };
   const range = job.pay_max && job.pay_max !== job.pay_min ? `${money(job.pay_min)}–${money(job.pay_max)}` : money(job.pay_min);
   return `${range}${suffix[job.pay_type]}`;
 }

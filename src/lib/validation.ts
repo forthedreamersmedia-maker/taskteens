@@ -51,6 +51,8 @@ export const applicationSchema = z
 export const jobSchema = z
   .object({
     title: z.string().trim().min(5, "Title should be at least 5 characters.").max(90),
+    opportunity_type: z.enum(["job", "internship", "volunteer"]),
+    nonprofit_attested: z.boolean().default(false),
     category: z.string().min(1, "Choose a category."),
     description: z.string().trim().min(40, "Describe the job in at least 40 characters.").max(4000),
     responsibilities: z.array(z.string().trim().min(1)).min(1, "Add at least one responsibility."),
@@ -67,8 +69,8 @@ export const jobSchema = z
       }),
     service_area: z.string().min(1),
     work_mode: z.enum(["in_person", "remote", "hybrid"]),
-    pay_type: z.enum(["hourly", "flat", "stipend"]),
-    pay_min: z.coerce.number({ invalid_type_error: "Enter pay." }).positive("Pay must be greater than $0."),
+    pay_type: z.enum(["hourly", "flat", "stipend", "unpaid"]),
+    pay_min: z.coerce.number({ invalid_type_error: "Enter pay." }).min(0),
     pay_max: z.coerce.number().nullable(),
     schedule: z.string().trim().min(3, "Describe the schedule."),
     schedule_tags: z.array(z.string()).default([]),
@@ -82,6 +84,13 @@ export const jobSchema = z
     status: z.enum(["draft", "published", "paused", "closed", "removed"]),
   })
   .superRefine((v, ctx) => {
+    if (v.opportunity_type === "volunteer" && v.pay_type !== "unpaid")
+      ctx.addIssue({ code: "custom", path: ["pay_type"], message: "Volunteer roles are unpaid. Post it as a paid job or internship instead." });
+    if (v.opportunity_type === "job" && v.pay_type === "unpaid")
+      ctx.addIssue({ code: "custom", path: ["pay_type"], message: "Jobs must be paid. Choose Internship or Volunteer for unpaid roles." });
+    if (v.pay_type === "unpaid" && !v.nonprofit_attested)
+      ctx.addIssue({ code: "custom", path: ["nonprofit_attested"], message: "Unpaid listings are only for nonprofits, schools, public agencies and community groups." });
+    if (v.pay_type !== "unpaid" && !(v.pay_min > 0)) ctx.addIssue({ code: "custom", path: ["pay_min"], message: "Pay must be greater than $0." });
     if (v.pay_max != null && v.pay_max !== 0 && v.pay_max < v.pay_min) {
       ctx.addIssue({ code: "custom", path: ["pay_max"], message: "Max pay can't be lower than min pay." });
     }

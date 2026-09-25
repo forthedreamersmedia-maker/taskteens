@@ -3,6 +3,7 @@ import type {
   ApplicationStatus,
   Category,
   GuardianConsentStatus,
+  OpportunityType,
   PayType,
   PlatformSettings,
   Recurrence,
@@ -92,7 +93,13 @@ export const APPLICATION_STATUS_TONE: Record<ApplicationStatus, "blue" | "navy" 
 
 export const RECURRENCE_LABEL: Record<Recurrence, string> = { one_time: "One-time", recurring: "Recurring" };
 export const WORK_MODE_LABEL: Record<WorkMode, string> = { in_person: "In person", remote: "Remote", hybrid: "Hybrid" };
-export const PAY_TYPE_LABEL: Record<PayType, string> = { hourly: "Hourly", flat: "Flat rate", stipend: "Stipend" };
+export const PAY_TYPE_LABEL: Record<PayType, string> = { hourly: "Hourly", flat: "Flat rate", stipend: "Stipend", unpaid: "Unpaid" };
+export const OPPORTUNITY_TYPE_LABEL: Record<OpportunityType, string> = { job: "Paid job", internship: "Internship", volunteer: "Volunteer" };
+export const OPPORTUNITY_TYPES: { value: OpportunityType; label: string; plural: string; body: string }[] = [
+  { value: "job", label: "Paid job", plural: "Paid jobs", body: "Get paid for local work" },
+  { value: "internship", label: "Internship", plural: "Internships", body: "Learn a field with a mentor" },
+  { value: "volunteer", label: "Volunteer", plural: "Volunteering", body: "Service hours & community" },
+];
 export const TRANSPORTATION_LABEL: Record<Transportation, string> = {
   none_needed: "No travel needed (remote)",
   transit_accessible: "Near BART / AC Transit",

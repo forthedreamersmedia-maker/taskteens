@@ -2,7 +2,9 @@
 import { Briefcase, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Captcha, type CaptchaHandle } from "@/components/auth/captcha";
+import { captchaEnabled } from "@/lib/config";
 import { AuthCard } from "@/components/layout/auth-card";
 import { Field } from "@/components/ui/field";
 import { Alert } from "@/components/ui/feedback";
@@ -24,17 +26,20 @@ export function SignUpForm() {
   const [ageOk, setAgeOk] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captcha = useRef<CaptchaHandle>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = signUpSchema.safeParse({ full_name, email, password, role, agree });
     const errs = parsed.success ? {} : fieldErrors(parsed.error);
     if (role === "teen" && !ageOk) errs.age_confirm = "Please confirm you're at least 14.";
+    if (captchaEnabled && !captchaToken) errs.captcha = "Please complete the security check.";
     if (Object.keys(errs).length || !parsed.success) return setErrors(errs);
     setBusy(true);
     setErrors({});
     try {
-      const { needsEmailVerification } = await data.signUp({ full_name, email, password, role: parsed.data.role });
+      const { needsEmailVerification } = await data.signUp({ full_name, email, password, role: parsed.data.role, captchaToken });
       if (needsEmailVerification) {
         router.push(`/auth/verify?email=${encodeURIComponent(email)}`);
         return;
@@ -44,13 +49,14 @@ export function SignUpForm() {
       router.push(dest);
     } catch (err) {
       setErrors({ _form: errorMessage(err) });
+      captcha.current?.reset();
       setBusy(false);
     }
   };
 
   const roles = [
-    { value: "teen" as const, icon: GraduationCap, title: "I'm a teen", body: "Find local jobs, ages 14–19" },
-    { value: "employer" as const, icon: Briefcase, title: "I'm hiring", body: "Family, individual or business" },
+    { value: "teen" as const, icon: GraduationCap, title: "I'm a teen", body: "Jobs, internships & volunteering, ages 14–19" },
+    { value: "employer" as const, icon: Briefcase, title: "I'm hiring", body: "Family, business or nonprofit" },
   ];
 
   return (
@@ -96,6 +102,7 @@ export function SignUpForm() {
           </label>
           {errors.agree && <p className="field-error">{errors.agree}</p>}
         </div>
+        <Captcha ref={captcha} action="signup" onToken={(t) => { setCaptchaToken(t); if (t) setErrors((e) => ({ ...e, captcha: "" })); }} error={errors.captcha} />
         {errors._form && <Alert tone="error">{errors._form}</Alert>}
         <button type="submit" disabled={busy} className="btn-primary w-full">{busy ? "Creating account…" : "Create account"}</button>
       </form>

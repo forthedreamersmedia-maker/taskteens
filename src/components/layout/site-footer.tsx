@@ -22,7 +22,7 @@ export function SiteFooter() {
         <div>
           <Logo light />
           <p className="mt-4 font-brand text-xs font-bold italic tracking-[0.12em] text-coral-300">Making Job Hunting Easier For Teens</p>
-          <p className="mt-3 max-w-xs text-sm leading-6 text-navy-200">Local jobs and real work experience for teens in Berkeley, Albany, El Cerrito and the surrounding East Bay.</p>
+          <p className="mt-3 max-w-xs text-sm leading-6 text-navy-200">Local jobs, internships, volunteering and real work experience for teens in Berkeley, Albany, El Cerrito and the surrounding East Bay.</p>
           <div className="mt-5 space-y-1 text-sm">
             <p>
               Email: <a className="text-white underline-offset-4 hover:underline" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>

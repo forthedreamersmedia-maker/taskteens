@@ -12,7 +12,7 @@ import { useSavedJobs } from "./use-saved-jobs";
 import { RatingInline, RatingSummary, useEmployerRatings } from "@/components/reviews/ratings";
 import { useAuth } from "@/lib/auth-context";
 import { useAsync } from "@/lib/hooks/use-async";
-import { PAY_TYPE_LABEL, RECURRENCE_LABEL, TRANSPORTATION_LABEL, WORK_MODE_LABEL } from "@/lib/constants";
+import { OPPORTUNITY_TYPE_LABEL, PAY_TYPE_LABEL, RECURRENCE_LABEL, TRANSPORTATION_LABEL, WORK_MODE_LABEL } from "@/lib/constants";
 import { categoryName, daysUntil, formatDate, formatPay, safeUrl } from "@/lib/utils";
 
 export function JobDetail({ id }: { id: string }) {
@@ -61,7 +61,7 @@ export function JobDetail({ id }: { id: string }) {
   };
 
   const facts = [
-    { icon: Wallet, label: "Compensation", value: `${formatPay(job)} · ${PAY_TYPE_LABEL[job.pay_type]}` },
+    { icon: Wallet, label: "Compensation", value: job.pay_type === "unpaid" ? formatPay(job) : `${formatPay(job)} · ${PAY_TYPE_LABEL[job.pay_type]}`, sub: job.pay_type === "unpaid" ? "Posted by a nonprofit, school, public agency or community group." : undefined },
     { icon: MapPin, label: "Location", value: job.work_mode === "remote" ? "Remote" : `${job.neighborhood ? `${job.neighborhood}, ` : ""}${job.city}`, sub: job.work_mode !== "remote" ? "Approximate area only. Exact location is shared by the employer later in the hiring process." : undefined },
     { icon: Clock, label: "Schedule", value: job.schedule, sub: `${RECURRENCE_LABEL[job.recurrence]} · ${WORK_MODE_LABEL[job.work_mode]}` },
     { icon: UserRound, label: "Minimum age", value: `${job.min_age}+` },
@@ -88,6 +88,7 @@ export function JobDetail({ id }: { id: string }) {
           </div>
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <Badge tone="cream">{categoryName(job.category)}</Badge>
+            {job.opportunity_type !== "job" && <Badge tone={job.opportunity_type === "volunteer" ? "green" : "blue"}>{OPPORTUNITY_TYPE_LABEL[job.opportunity_type]}</Badge>}
             <Badge tone={job.recurrence === "recurring" ? "blue" : "coral"}>{RECURRENCE_LABEL[job.recurrence]}</Badge>
             {job.is_demo && <DemoBadge />}
           </div>
@@ -113,7 +114,7 @@ export function JobDetail({ id }: { id: string }) {
           </dl>
 
           <section className="mt-8" aria-labelledby="about-job">
-            <h2 id="about-job" className="text-xl font-bold">About this job</h2>
+            <h2 id="about-job" className="text-xl font-bold">About this {job.opportunity_type === "job" ? "job" : job.opportunity_type === "internship" ? "internship" : "volunteer role"}</h2>
             <p className="mt-3 whitespace-pre-line leading-7 text-navy-700">{job.description}</p>
           </section>
 

@@ -104,9 +104,9 @@ export interface DataClient {
   getSession(): Promise<Session | null>;
   onAuthChange(cb: (s: Session | null) => void): () => void;
   signUp(input: SignUpInput): Promise<{ needsEmailVerification: boolean }>;
-  signIn(email: string, password: string): Promise<Session>;
+  signIn(email: string, password: string, captchaToken?: string | null): Promise<Session>;
   signOut(): Promise<void>;
-  requestPasswordReset(email: string): Promise<void>;
+  requestPasswordReset(email: string, captchaToken?: string | null): Promise<void>;
   updatePassword(password: string): Promise<void>;
   resendVerification(email: string): Promise<void>;
 

@@ -1,7 +1,7 @@
 import { MIN_REVIEWS_FOR_SCORE, RELIABLE_MIN_COMPLETED } from "./constants";
 import type { EmployerRatingSummary } from "./types";
 
-type ReviewLike = { stars: number; paid_as_promised: boolean; matched_listing: boolean; felt_safe: boolean; respectful: boolean };
+type ReviewLike = { stars: number; paid_as_promised: boolean | null; matched_listing: boolean; felt_safe: boolean; respectful: boolean };
 
 /**
  * Builds the public, aggregate-only rating summary for an employer.
@@ -15,7 +15,11 @@ export function summarizeEmployer(
 ): EmployerRatingSummary {
   const n = publishedReviews.length;
   const show = n >= MIN_REVIEWS_FOR_SCORE;
-  const pct = (k: keyof Omit<ReviewLike, "stars">) => Math.round((publishedReviews.filter((r) => r[k]).length / n) * 100);
+  // Percentages ignore "not applicable" answers (e.g. no pay question for volunteer roles).
+  const pct = (k: keyof Omit<ReviewLike, "stars">) => {
+    const answered = publishedReviews.filter((r) => r[k] !== null);
+    return answered.length ? Math.round((answered.filter((r) => r[k]).length / answered.length) * 100) : null;
+  };
   return {
     employer_id,
     completed_jobs: completedJobs,

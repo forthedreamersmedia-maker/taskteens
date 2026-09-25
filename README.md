@@ -66,6 +66,7 @@ supabase/
   migrations/…_security.sql   Helper functions, triggers, RLS, storage policies, admin RPCs
   migrations/…_remove_oakland.sql
   migrations/…_ratings.sql    Job completion, employer ratings, private teen feedback, review disputes
+  migrations/…_opportunity_types.sql  Paid jobs, internships and volunteer roles
   seed.sql                    Demo data (generated)
 scripts/generate-seed-sql.ts
 ```
@@ -87,6 +88,7 @@ Copy `.env.example` to `.env.local`.
 | `RESEND_API_KEY` | server | Transactional email. If missing, emails are logged and skipped |
 | `EMAIL_FROM` | server | e.g. `TaskTeens <hello@taskteens.com>`. The domain must be verified in Resend |
 | `SAFETY_INBOX` | server | Receives copies of urgent and emergency reports |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | client | Cloudflare Turnstile CAPTCHA on sign-up, sign-in and password reset. The secret key goes in Supabase (see below). Leave empty to turn it off |
 
 ---
 
@@ -97,7 +99,8 @@ Copy `.env.example` to `.env.local`.
 3. **Auth → Providers → Email:** turn on "Confirm email".
 4. **Auth → URL configuration:** set Site URL to your domain and add `https://YOUR_DOMAIN/auth/callback` to the redirect URLs.
 5. (Optional) Load the demo data with `supabase/seed.sql`. It creates the same fictional accounts, using password `demo1234`. **Don't run it on a production project with real users.** If you edit `src/lib/data/seed.ts`, regenerate the file with `npm run seed:sql`.
-6. **Create your first admin.** Sign-up only allows the `teen` and `employer` roles, so run this in the SQL editor:
+6. **CAPTCHA (recommended):** create a free Turnstile widget at dash.cloudflare.com → Turnstile, with your domains (taskteens.com, www.taskteens.com, localhost). Put the **site key** in `NEXT_PUBLIC_TURNSTILE_SITE_KEY` on Vercel. Put the **secret key** in Supabase → Authentication → Attack Protection → "Enable CAPTCHA protection" → Turnstile. Supabase then checks every sign-up, sign-in and password-reset request, so bots can't skip the widget by calling the API directly. Set both keys together, or no one will be able to sign in.
+7. **Create your first admin.** Sign-up only allows the `teen` and `employer` roles, so run this in the SQL editor:
    ```sql
    update public.users set role = 'admin' where email = 'hello@taskteens.com';
    ```
@@ -157,6 +160,8 @@ Fonts load from Google Fonts at runtime, and photos come from Unsplash (with gra
 - Employer dashboard: stats, listings CRUD (draft, publish, pause, close, delete, image upload), applicants grouped by job with status filters, auto-mark-as-viewed, interview requests, select/decline with a message, private notes, block and report
 - Admin: reports queue (emergencies first), listing moderation (approve, reject, pause, remove, restore, feature), verification review, user suspension, categories and service areas, configurable age/consent/permit/approval rules, audit log, and standalone moderation notes
 - Safety: a report form (including an emergency route at `/report?severity=emergency`) and block tools. Forms reject street addresses in listings and SSN-like numbers in applications
+- Opportunity types: paid jobs, internships (paid, or unpaid for nonprofits) and volunteer roles, with tabs and filters. Unpaid listings require a nonprofit/school/public-agency attestation, database constraints enforce it, and switching a listing to unpaid sends it back to moderation
+- CAPTCHA (Cloudflare Turnstile) on sign-up, sign-in and password reset, verified by Supabase Auth
 - Ratings: employers get public ratings after completed jobs (stars plus paid as promised, matched listing, felt safe, respectful). Only aggregates are shown, and the score appears after 3 ratings. There's a Reliable Employer badge, private employer feedback about teens (teens are never publicly rated), rating disputes through reports, and admin hide/restore
 - Legal pages (Privacy, Terms, Community Guidelines) marked as starter drafts, plus a Safety center
 
@@ -168,4 +173,4 @@ Fonts load from Google Fonts at runtime, and photos come from Unsplash (with gra
 - Distance-radius search uses service areas and cities, not geolocation.
 - Account deletion creates a request for an admin to handle. Automated data deletion isn't built yet.
 - An attorney needs to review the legal pages, the age and permit rules, and the minimum-wage guidance before a public launch.
-- Rate limiting and CAPTCHA on sign-up and reports (recommended: Vercel WAF or Supabase Auth's CAPTCHA) aren't set up.
+- Rate limiting and CAPTCHA on the public report form aren't set up (sign-up already has CAPTCHA once the Turnstile keys are set).
