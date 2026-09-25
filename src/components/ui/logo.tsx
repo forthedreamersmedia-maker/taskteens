@@ -1,24 +1,19 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-export function LogoMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 40 40" className={cn("h-9 w-9", className)} aria-hidden="true">
-      <rect width="40" height="40" rx="12" fill="#0B1F3A" />
-      {/* bay wave + rising sun: local + growth */}
-      <circle cx="26" cy="15" r="5.5" fill="#FF6B57" />
-      <path d="M6 27c4-3.2 8-3.2 12 0s8 3.2 12 0 6-2.4 6-2.4V34H6z" fill="#2F6BFF" />
-      <path d="M10 12h11M15.5 12v14" stroke="#FBF6EE" strokeWidth="3.2" strokeLinecap="round" />
-    </svg>
-  );
+/** T/T monogram from the TaskTeens brand mark. */
+export function LogoMark({ className, light = false }: { className?: string; light?: boolean }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={light ? "/logo-mark-white.png" : "/logo-mark.png"} alt="" aria-hidden="true" width={434} height={474} className={cn("h-9 w-auto", className)} />;
 }
 
 export function Logo({ className, light = false }: { className?: string; light?: boolean }) {
   return (
-    <Link href="/" className={cn("group inline-flex items-center gap-2.5 rounded-xl", className)} aria-label="TaskTeens home">
-      <LogoMark />
-      <span className={cn("font-display text-xl font-extrabold tracking-tight", light ? "text-white" : "text-navy-800")}>
-        Task<span className="text-coral-500">Teens</span>
+    <Link href="/" className={cn("group inline-flex items-center gap-3 rounded-xl", className)} aria-label="TaskTeens home">
+      <LogoMark light={light} className="h-9" />
+      <span className="flex flex-col leading-none">
+        <span className={cn("font-brand text-[15px] font-medium uppercase tracking-[0.32em]", light ? "text-white" : "text-navy-800")}>TaskTeens</span>
+        <span className={cn("mt-1 font-brand text-[9px] font-medium uppercase tracking-[0.38em]", light ? "text-white/70" : "text-navy-400")}>Bay Area Built</span>
       </span>
     </Link>
   );

@@ -13,6 +13,7 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
         display: ["var(--font-display)", "ui-sans-serif", "system-ui", "sans-serif"],
+        brand: ["Montserrat", "var(--font-sans)", "ui-sans-serif", "sans-serif"],
       },
       borderRadius: { "4xl": "2rem" },
       boxShadow: {

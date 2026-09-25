@@ -22,7 +22,7 @@ const u = (id: string, w = 1200) => `https://images.unsplash.com/${id}?auto=form
 export const IMAGES = {
   hero: u("photo-1529156069898-49953e39b3ac", 1600),
   heroAlt: u("photo-1522202176988-66273c2fd55f", 1200),
-  bay: u("photo-1501594907352-04cda38ebc29", 1600),
+  bay: "/hero-bay-sm.jpg",
   employer: u("photo-1556761175-5973dc0f32e7", 1400),
   safety: u("photo-1521791136064-7986c2920216", 1200),
 };
