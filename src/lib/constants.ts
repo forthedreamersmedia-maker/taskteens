@@ -14,8 +14,8 @@ import type {
 
 export const SITE_NAME = "TaskTeens";
 export const TAGLINE = "Local jobs. Real experience. Built for teens.";
-export const CONTACT_EMAIL = "hello@taskteens.org"; // placeholder — replace before launch
-export const SAFETY_EMAIL = "safety@taskteens.org"; // placeholder — replace before launch
+export const CONTACT_EMAIL = "hello@taskteens.com";
+export const SAFETY_EMAIL = "safety@taskteens.com";
 
 const u = (id: string, w = 1200) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&q=70`;
 
