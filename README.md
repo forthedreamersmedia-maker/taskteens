@@ -20,9 +20,9 @@ If no Supabase environment variables are set, the app runs in **local demonstrat
 - A yellow banner marks the mode on every page.
 - Data is stored in the browser's `localStorage` and seeded with fictional listings. Each one is labeled **"Demo listing"**.
 - Sign-in uses demo accounts. The password for all of them is `demo1234`:
-  - `teen@demo.taskteens.org`: Maya (teen worker)
-  - `employer@demo.taskteens.org`: Solano Paws (employer)
-  - `admin@demo.taskteens.org`: platform admin
+  - `teen@demo.taskteens.com`: Maya (teen worker)
+  - `employer@demo.taskteens.com`: Solano Paws (employer)
+  - `admin@demo.taskteens.com`: platform admin
 - Instead of being sent, emails are written to an on-screen outbox at **`/demo`**. You can also reset the demo data there.
 - Two tabs in the same browser share data. That means you can apply as the teen in one tab and watch the application appear in the employer tab.
 
@@ -81,7 +81,7 @@ Copy `.env.example` to `.env.local`.
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | client | Supabase anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | **server only** | Looks up the employer's email for notifications, after the caller has been verified |
 | `RESEND_API_KEY` | server | Transactional email. If missing, emails are logged and skipped |
-| `EMAIL_FROM` | server | e.g. `TaskTeens <notifications@yourdomain.org>`. The domain must be verified in Resend |
+| `EMAIL_FROM` | server | e.g. `TaskTeens <hello@taskteens.com>`. The domain must be verified in Resend |
 | `SAFETY_INBOX` | server | Receives copies of urgent and emergency reports |
 
 ---
@@ -95,7 +95,7 @@ Copy `.env.example` to `.env.local`.
 5. (Optional) Load the demo data with `supabase/seed.sql`. It creates the same fictional accounts, using password `demo1234`. **Don't run it on a production project with real users.** If you edit `src/lib/data/seed.ts`, regenerate the file with `npm run seed:sql`.
 6. **Create your first admin.** Sign-up only allows the `teen` and `employer` roles, so run this in the SQL editor:
    ```sql
-   update public.users set role = 'admin' where email = 'you@yourdomain.org';
+   update public.users set role = 'admin' where email = 'hello@taskteens.com';
    ```
 7. The storage buckets (`resumes` is private, `job-images` is public) and the realtime publication are created by the migration.
 

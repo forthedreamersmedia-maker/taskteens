@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
-import { CONTACT_EMAIL, SAFETY_EMAIL } from "@/lib/constants";
+import { CONTACT_EMAIL } from "@/lib/constants";
 
 const COLS = [
   { title: "Teens", links: [["Find jobs", "/jobs"], ["How it works", "/how-it-works"], ["Create a teen account", "/auth/sign-up?role=teen"], ["Safety tips", "/safety"]] },
@@ -19,10 +19,7 @@ export function SiteFooter() {
           <p className="mt-3 max-w-xs text-sm leading-6 text-navy-200">Local jobs and real work experience for teens in Berkeley, Albany, El Cerrito and the surrounding East Bay.</p>
           <div className="mt-5 space-y-1 text-sm">
             <p>
-              General: <a className="text-white underline-offset-4 hover:underline" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-            </p>
-            <p>
-              Safety: <a className="text-white underline-offset-4 hover:underline" href={`mailto:${SAFETY_EMAIL}`}>{SAFETY_EMAIL}</a>
+              Email: <a className="text-white underline-offset-4 hover:underline" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
             </p>
           </div>
         </div>
