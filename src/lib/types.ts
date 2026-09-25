@@ -137,6 +137,9 @@ export interface Application {
   viewed_at: string | null;
   status_updated_at: string;
   created_at: string;
+  /** Set when either side marks a selected job as done. Reviews/feedback unlock after this. */
+  completed_at: string | null;
+  completed_by: "teen" | "employer" | null;
 }
 
 export interface ApplicationWithJob extends Application {
@@ -198,7 +201,7 @@ export interface InterviewRequest {
   updated_at: string;
 }
 
-export type ReportTarget = "job" | "user" | "application" | "other";
+export type ReportTarget = "job" | "user" | "application" | "review" | "other";
 export type ReportSeverity = "normal" | "urgent" | "emergency";
 export type ReportStatus = "open" | "investigating" | "resolved" | "dismissed";
 
@@ -243,6 +246,80 @@ export interface AdminAuditLog {
   note: string | null;
   metadata: Record<string, unknown>;
   created_at: string;
+}
+
+/** Public employer review left by a teen after a completed job. Only aggregates are public. */
+export type ReviewStatus = "published" | "hidden";
+export interface EmployerReview {
+  id: string;
+  application_id: string;
+  job_id: string;
+  employer_id: string;
+  teen_id: string;
+  stars: number; // 1-5
+  paid_as_promised: boolean;
+  matched_listing: boolean;
+  felt_safe: boolean;
+  respectful: boolean;
+  private_note: string | null; // seen by TaskTeens moderators only
+  status: ReviewStatus;
+  created_at: string;
+}
+
+/** What an employer sees about reviews of them — no teen identity, no private note. */
+export interface EmployerReviewForEmployer {
+  id: string;
+  job_title: string;
+  stars: number;
+  paid_as_promised: boolean;
+  matched_listing: boolean;
+  felt_safe: boolean;
+  respectful: boolean;
+  status: ReviewStatus;
+  created_at: string;
+}
+
+/** Private structured feedback an employer gives TaskTeens about a teen. Never public. */
+export interface TeenFeedback {
+  id: string;
+  application_id: string;
+  job_id: string;
+  employer_id: string;
+  teen_id: string;
+  showed_up: boolean;
+  communicated: boolean;
+  completed_job: boolean;
+  note: string | null;
+  created_at: string;
+}
+
+export interface EmployerRatingSummary {
+  employer_id: string;
+  completed_jobs: number;
+  review_count: number;
+  /** null until the employer has at least MIN_REVIEWS_FOR_SCORE published reviews */
+  avg_stars: number | null;
+  pct_paid: number | null;
+  pct_matched: number | null;
+  pct_respectful: number | null;
+  pct_safe: number | null;
+  reliable: boolean;
+}
+
+export interface EmployerReviewInput {
+  stars: number;
+  paid_as_promised: boolean;
+  matched_listing: boolean;
+  felt_safe: boolean;
+  respectful: boolean;
+  private_note?: string;
+}
+
+export interface TeenFeedbackInput {
+  showed_up: boolean;
+  communicated: boolean;
+  completed_job: boolean;
+  note?: string;
 }
 
 export interface Block {

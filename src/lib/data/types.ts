@@ -27,6 +27,13 @@ import type {
   UserRow,
   VerificationRequest,
   ApplicationInput,
+  EmployerRatingSummary,
+  EmployerReview,
+  EmployerReviewForEmployer,
+  EmployerReviewInput,
+  ReviewStatus,
+  TeenFeedback,
+  TeenFeedbackInput,
 } from "../types";
 
 export class DataError extends Error {
@@ -155,6 +162,20 @@ export interface DataClient {
   requestInterview(applicationId: string, input: InterviewInput): Promise<InterviewRequest>;
   listEmployerInterviews(): Promise<InterviewWithContext[]>;
 
+  // ---- completion, ratings & feedback ----
+  /** Teen or employer marks a *selected* application's job as completed. Unlocks reviews/feedback. */
+  markApplicationCompleted(applicationId: string): Promise<void>;
+  /** Public, aggregate-only rating summaries for the given employers. */
+  getEmployerRatings(employerIds: string[]): Promise<Record<string, EmployerRatingSummary>>;
+  /** Teen: their own review for an application, if any. */
+  getMyReviewForApplication(applicationId: string): Promise<EmployerReview | null>;
+  submitEmployerReview(applicationId: string, input: EmployerReviewInput): Promise<void>;
+  /** Employer: reviews about them — without teen identity or private notes. */
+  listMyEmployerReviews(): Promise<EmployerReviewForEmployer[]>;
+  /** Employer: private feedback they gave TaskTeens about a teen for this application. */
+  getMyTeenFeedback(applicationId: string): Promise<TeenFeedback | null>;
+  submitTeenFeedback(applicationId: string, input: TeenFeedbackInput): Promise<void>;
+
   // ---- safety ----
   createReport(input: ReportInput): Promise<Report>;
   blockUser(userId: string): Promise<void>;
@@ -181,6 +202,9 @@ export interface DataClient {
   adminListAuditLogs(): Promise<AdminAuditLog[]>;
   adminRecentActivity(): Promise<{ kind: string; label: string; at: string }[]>;
   adminAddNote(targetType: string, targetId: string, note: string): Promise<void>;
+  adminListReviews(): Promise<(EmployerReview & { employer_name: string; job_title: string; teen_name: string })[]>;
+  adminSetReviewStatus(id: string, status: ReviewStatus, note: string): Promise<void>;
+  adminListTeenFeedback(): Promise<(TeenFeedback & { employer_name: string; job_title: string; teen_name: string })[]>;
 
   // ---- demo only ----
   demoOutbox?(): Promise<EmailLogEntry[]>;

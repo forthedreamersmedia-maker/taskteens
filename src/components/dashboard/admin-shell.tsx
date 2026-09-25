@@ -1,11 +1,12 @@
 "use client";
-import { BadgeCheck, ClipboardList, FileClock, Flag, LayoutDashboard, Settings2, Tags, Users } from "lucide-react";
+import { BadgeCheck, ClipboardList, FileClock, Flag, LayoutDashboard, Settings2, Star, Tags, Users } from "lucide-react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 
 const NAV = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/admin/reports", label: "Reports & safety", icon: Flag },
   { href: "/admin/listings", label: "Listings", icon: ClipboardList },
+  { href: "/admin/reviews", label: "Ratings & feedback", icon: Star },
   { href: "/admin/verifications", label: "Verifications", icon: BadgeCheck },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/categories", label: "Categories & areas", icon: Tags },

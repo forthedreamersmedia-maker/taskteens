@@ -20,7 +20,8 @@ export default function AdminReports() {
   const [action, setAction] = useState<PendingAction | null>(null);
   const list = reports?.filter((r) => filter === "all" || r.status === "open" || r.status === "investigating") ?? [];
   const set = (r: Report, s: ReportStatus) => setAction({ title: `Mark report as ${s}?`, description: r.reason, confirmLabel: "Save", requireNote: s === "resolved" || s === "dismissed", run: (n) => data.adminUpdateReport(r.id, s, n) });
-  const targetHref = (r: Report) => (r.target_type === "job" && r.target_id ? `/jobs/${r.target_id}` : null);
+  const targetHref = (r: Report) =>
+    r.target_type === "job" && r.target_id ? `/jobs/${r.target_id}` : r.target_type === "review" && r.target_id ? `/admin/reviews?review=${r.target_id}` : null;
 
   return (
     <AdminShell title="Reports & safety incidents" subtitle="Emergency reports appear first. Resolve or dismiss with a note.">
@@ -56,6 +57,7 @@ export default function AdminReports() {
                 {r.status !== "resolved" && <button className="btn-primary btn-sm" onClick={() => set(r, "resolved")}>Resolve</button>}
                 {r.status !== "dismissed" && <button className="btn-ghost btn-sm" onClick={() => set(r, "dismissed")}>Dismiss</button>}
                 {r.target_type === "job" && r.target_id && <Link href="/admin/listings" className="btn-ghost btn-sm">Moderate listing</Link>}
+                {r.target_type === "review" && r.target_id && <Link href={`/admin/reviews?review=${r.target_id}`} className="btn-ghost btn-sm">Review this rating</Link>}
                 {r.target_type === "user" && <Link href="/admin/users" className="btn-ghost btn-sm">Manage users</Link>}
               </div>
             </li>

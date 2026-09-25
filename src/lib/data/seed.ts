@@ -22,6 +22,8 @@ import type {
   Category,
   ServiceArea,
   PlatformSettings,
+  EmployerReview,
+  TeenFeedback,
 } from "../types";
 
 export const DEMO_PASSWORD = "demo1234";
@@ -41,13 +43,15 @@ export interface DemoDB {
   verification_requests: VerificationRequest[];
   admin_audit_logs: AdminAuditLog[];
   blocks: Block[];
+  employer_reviews: EmployerReview[];
+  teen_feedback: TeenFeedback[];
   categories: Category[];
   service_areas: ServiceArea[];
   settings: PlatformSettings;
   outbox: EmailLogEntry[];
 }
 
-export const DEMO_DB_VERSION = 5;
+export const DEMO_DB_VERSION = 6;
 
 const day = 86400000;
 const iso = (offsetDays: number) => new Date(Date.now() + offsetDays * day).toISOString();
@@ -122,6 +126,15 @@ function job(j: JobSeed, postedDaysAgo: number): Job {
   };
 }
 
+const PAST_TEENS = [
+  { id: "u_teen_past1", email: "past1@demo.taskteens.com", name: "Demo Worker A.", city: "Albany" },
+  { id: "u_teen_past2", email: "past2@demo.taskteens.com", name: "Demo Worker B.", city: "Berkeley" },
+  { id: "u_teen_past3", email: "past3@demo.taskteens.com", name: "Demo Worker C.", city: "El Cerrito" },
+  { id: "u_teen_past4", email: "past4@demo.taskteens.com", name: "Demo Worker D.", city: "Berkeley" },
+  { id: "u_teen_past5", email: "past5@demo.taskteens.com", name: "Demo Worker E.", city: "Albany" },
+  { id: "u_teen_past6", email: "past6@demo.taskteens.com", name: "Demo Worker F.", city: "El Cerrito" },
+];
+
 export function buildSeed(): DemoDB {
   const users = [
     user("u_teen_maya", "teen@demo.taskteens.com", "Maya Rodriguez", "teen", -30, "(510) 555-0142"),
@@ -135,6 +148,8 @@ export function buildSeed(): DemoDB {
     user("u_emp_gilman", "gilman@demo.taskteens.com", "Mei Chen", "employer", -50, "(510) 555-0156"),
     user("u_emp_bayside", "bayside@demo.taskteens.com", "Tom Alvarez", "employer", -9, "(510) 555-0167"),
     user("u_admin", "admin@demo.taskteens.com", "TaskTeens Admin", "admin", -90),
+    // Fictional past workers, so demo employers have completed-job history and ratings.
+    ...PAST_TEENS.map((t, i) => user(t.id, t.email, t.name, "teen" as const, -120 + i)),
   ];
 
   const employer_profiles: EmployerProfile[] = [
@@ -307,6 +322,7 @@ export function buildSeed(): DemoDB {
 
   const baseApp = {
     resume_path: null, resume_name: null, portfolio_url: null, agreed_to_safety_rules: true, viewed_at: null,
+    completed_at: null as string | null, completed_by: null as Application["completed_by"],
     work_permit_status: "have_permit" as const, guardian_consent_status: "obtained" as const,
   };
 
@@ -341,6 +357,72 @@ export function buildSeed(): DemoDB {
       work_permit_status: "in_progress", status_updated_at: iso(0), created_at: iso(0),
     },
   ];
+
+  // ---- completed jobs (demo history) -------------------------------------------------
+  type Past = { id: string; job: string; emp: string; teen: string; daysAgo: number; review?: [number, boolean, boolean, boolean, boolean]; feedback?: [boolean, boolean, boolean] };
+  const past: Past[] = [
+    // Plaza Corner Books: 6 completed, 6 reviews, no open reports → "Reliable Employer"
+    { id: "app_p1_books", job: "job_bookstore_clerk", emp: "u_emp_plaza", teen: "u_teen_past1", daysAgo: 70, review: [5, true, true, true, true], feedback: [true, true, true] },
+    { id: "app_p2_books", job: "job_bookstore_clerk", emp: "u_emp_plaza", teen: "u_teen_past2", daysAgo: 62, review: [5, true, true, true, true] },
+    { id: "app_p3_books", job: "job_bookstore_clerk", emp: "u_emp_plaza", teen: "u_teen_past3", daysAgo: 55, review: [4, true, false, true, true] },
+    { id: "app_p4_data", job: "job_data_entry", emp: "u_emp_plaza", teen: "u_teen_past4", daysAgo: 48, review: [5, true, true, true, true] },
+    { id: "app_p5_data", job: "job_data_entry", emp: "u_emp_plaza", teen: "u_teen_past5", daysAgo: 40, review: [5, true, true, true, true] },
+    { id: "app_p6_data", job: "job_data_entry", emp: "u_emp_plaza", teen: "u_teen_past6", daysAgo: 33, review: [5, true, true, true, true] },
+    // Solano Paws: 3 reviews → score shown, not yet Reliable
+    { id: "app_p1_dog", job: "job_dog_walker_solano", emp: "u_emp_solano", teen: "u_teen_past1", daysAgo: 45, review: [5, true, true, true, true], feedback: [true, true, true] },
+    { id: "app_p2_dog", job: "job_dog_walker_solano", emp: "u_emp_solano", teen: "u_teen_past2", daysAgo: 30, review: [4, true, true, true, true] },
+    { id: "app_p3_pet", job: "job_pet_sitter_weekend", emp: "u_emp_solano", teen: "u_teen_past3", daysAgo: 21, review: [5, true, true, true, true] },
+    // Solano Paws: completed, waiting on the employer's private feedback (try it as the demo employer)
+    { id: "app_p4_pet", job: "job_pet_sitter_weekend", emp: "u_emp_solano", teen: "u_teen_past4", daysAgo: 6 },
+    // Gilman café: 2 reviews → "New on TaskTeens" (score hidden until 3)
+    { id: "app_p4_cafe", job: "job_barista_weekend", emp: "u_emp_gilman", teen: "u_teen_past4", daysAgo: 28, review: [4, true, true, true, true] },
+    { id: "app_p5_social", job: "job_social_media", emp: "u_emp_gilman", teen: "u_teen_past5", daysAgo: 19, review: [5, true, true, true, true] },
+  ];
+  for (const p of past) {
+    const t = PAST_TEENS.find((x) => x.id === p.teen)!;
+    applications.push({
+      ...baseApp, id: p.id, job_id: p.job, employer_id: p.emp, teen_id: p.teen, status: "selected",
+      applicant_name: t.name, applicant_email: t.email, applicant_phone: "(510) 555-0100", age_range: "16-17", city: t.city,
+      experience: "Demo past worker.", skills: ["Reliable"], availability: "Weekends", transportation: "bike_or_walk",
+      interest_statement: "Demonstration application used to show completed-job history.",
+      viewed_at: iso(-p.daysAgo - 5), status_updated_at: iso(-p.daysAgo - 4), created_at: iso(-p.daysAgo - 7),
+      completed_at: iso(-p.daysAgo), completed_by: "employer",
+    });
+  }
+  // Maya (demo teen): one finished job ready to rate, one selected job still in progress.
+  applications.push(
+    {
+      ...baseApp, id: "app_maya_yard", job_id: "job_yard_cleanup", employer_id: "u_emp_rivera", teen_id: "u_teen_maya", status: "selected",
+      applicant_name: "Maya Rodriguez", applicant_email: "teen@demo.taskteens.com", applicant_phone: "(510) 555-0142", age_range: "16-17", city: "Albany",
+      experience: "Help with our family garden every fall.", skills: ["Hard-working", "Outdoors"], availability: "Saturday", transportation: "transit_accessible",
+      interest_statement: "I'm happy to work outside and I'm free that weekend.", work_permit_status: "in_progress",
+      viewed_at: iso(-9), status_updated_at: iso(-8), created_at: iso(-10), completed_at: iso(-2), completed_by: "employer",
+    },
+    {
+      ...baseApp, id: "app_maya_event", job_id: "job_event_setup", employer_id: "u_emp_bayside", teen_id: "u_teen_maya", status: "selected",
+      applicant_name: "Maya Rodriguez", applicant_email: "teen@demo.taskteens.com", applicant_phone: "(510) 555-0142", age_range: "16-17", city: "Albany",
+      experience: "Set up and cleaned up for our school's spring fair.", skills: ["Teamwork", "Early riser"], availability: "Saturday mornings", transportation: "transit_accessible",
+      interest_statement: "I like busy mornings and helping events run smoothly.", work_permit_status: "in_progress",
+      viewed_at: iso(-5), status_updated_at: iso(-4), created_at: iso(-6),
+    },
+  );
+
+  const employer_reviews: EmployerReview[] = past
+    .filter((p) => p.review)
+    .map((p) => {
+      const [stars, paid, matched, safe, respectful] = p.review!;
+      return {
+        id: `rev_${p.id.slice(4)}`, application_id: p.id, job_id: p.job, employer_id: p.emp, teen_id: p.teen, stars,
+        paid_as_promised: paid, matched_listing: matched, felt_safe: safe, respectful, private_note: null, status: "published" as const,
+        created_at: iso(-p.daysAgo + 1),
+      };
+    });
+  const teen_feedback: TeenFeedback[] = past
+    .filter((p) => p.feedback)
+    .map((p) => ({
+      id: `tfb_${p.id.slice(4)}`, application_id: p.id, job_id: p.job, employer_id: p.emp, teen_id: p.teen,
+      showed_up: p.feedback![0], communicated: p.feedback![1], completed_job: p.feedback![2], note: null, created_at: iso(-p.daysAgo + 1),
+    }));
 
   const interview_requests: InterviewRequest[] = [
     {
@@ -393,6 +475,8 @@ export function buildSeed(): DemoDB {
     verification_requests,
     admin_audit_logs,
     blocks: [],
+    employer_reviews,
+    teen_feedback,
     categories: CATEGORIES.map((c) => ({ ...c })),
     service_areas: SERVICE_AREAS.map((a) => ({ ...a })),
     settings: { ...DEFAULT_SETTINGS },

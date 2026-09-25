@@ -7,16 +7,22 @@ import { NotificationList } from "@/components/dashboard/notification-list";
 import { Section, StatCard } from "@/components/layout/dashboard-shell";
 import { StatusBadge } from "@/components/ui/badge";
 import { EmptyState, Skeleton } from "@/components/ui/feedback";
-import { useData } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth-context";
+import { RatingSummary, StarDisplay } from "@/components/reviews/ratings";
+import { ReportButton } from "@/components/safety/report-dialog";
+import { Badge } from "@/components/ui/badge";
 import { useAsync } from "@/lib/hooks/use-async";
 import { formatDateTime, timeAgo } from "@/lib/utils";
 
 export default function EmployerOverview() {
-  const data = useData();
+  const { data, session } = useAuth();
   const { data: b, loading, reload } = useAsync(async () => {
-    const [stats, apps, interviews, profile] = await Promise.all([data.getEmployerStats(), data.listEmployerApplications(), data.listEmployerInterviews(), data.getEmployerProfile()]);
-    return { stats, apps, interviews, profile };
-  }, []);
+    const [stats, apps, interviews, profile, reviews, ratings] = await Promise.all([
+      data.getEmployerStats(), data.listEmployerApplications(), data.listEmployerInterviews(), data.getEmployerProfile(),
+      data.listMyEmployerReviews(), data.getEmployerRatings(session ? [session.user.id] : []),
+    ]);
+    return { stats, apps, interviews, profile, reviews, rating: session ? ratings[session.user.id] : undefined };
+  }, [session?.user.id]);
   useEffect(() => data.subscribeNotifications(() => reload(true)), [data, reload]);
   const s = b?.stats;
   const v = b?.profile?.verification_status;
@@ -37,6 +43,37 @@ export default function EmployerOverview() {
         <StatCard label="Applications" value={s?.totalApplications ?? "–"} icon={Inbox} tone="coral" hint={s ? `${s.newApplications} new` : undefined} />
         <StatCard label="Interviews" value={s?.interviews ?? "–"} icon={CalendarCheck} tone="green" hint="proposed or confirmed" />
       </div>
+
+      <Section title="Your ratings" action={<Link href="/guidelines#ratings" className="link text-sm">How ratings work</Link>}>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+          <RatingSummary rating={b?.rating} />
+          <div className="rounded-2xl border border-navy-100 bg-white p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-navy-400">Individual ratings</p>
+            {!b?.reviews.length ? (
+              <p className="mt-2 text-sm text-navy-500">No ratings yet. When a teen you hired finishes a job, mark it completed on their application so they can rate it.</p>
+            ) : (
+              <ul className="mt-2 divide-y divide-navy-50">
+                {b.reviews.slice(0, 8).map((r) => (
+                  <li key={r.id} className="flex flex-col gap-1.5 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                        <StarDisplay value={r.stars} /> <span className="truncate text-navy-600">{r.job_title}</span>
+                        {r.status === "hidden" && <Badge tone="gray">Hidden by moderator</Badge>}
+                      </p>
+                      <p className="text-xs text-navy-500">
+                        {[r.paid_as_promised ? "Paid as promised" : "Not paid as promised", r.matched_listing ? "Matched listing" : "Didn't match listing", r.respectful ? "Respectful" : "Not respectful", r.felt_safe ? "Felt safe" : "Didn't feel safe"].join(" · ")}
+                        {" · "}{new Date(r.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                      </p>
+                    </div>
+                    <ReportButton targetType="review" targetId={r.id} label="Dispute" />
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-3 text-[11px] leading-4 text-navy-400">Teens&apos; names aren&apos;t shown. If a rating looks like harassment, retaliation, a false claim, personal information or isn&apos;t about the job, dispute it and a moderator will review it. Contacting or pressuring a teen about a rating is against the Community Guidelines.</p>
+          </div>
+        </div>
+      </Section>
 
       <Section title="Recent applicants" action={<Link href="/dashboard/employer/applications" className="link text-sm">View all</Link>}>
         {loading ? (

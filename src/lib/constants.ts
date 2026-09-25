@@ -152,3 +152,7 @@ export const REPORT_REASONS = [
   "Discrimination",
   "Other",
 ];
+
+/** Ratings rules */
+export const MIN_REVIEWS_FOR_SCORE = 3; // overall score is hidden until this many reviews
+export const RELIABLE_MIN_COMPLETED = 5; // "Reliable Employer" badge threshold

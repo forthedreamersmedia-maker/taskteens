@@ -1,11 +1,12 @@
 "use client";
-import { ArrowLeft, Ban, CalendarPlus, Check, ExternalLink, FileText, Lock, Mail, Phone, ThumbsDown, X } from "lucide-react";
+import { ArrowLeft, Ban, CalendarPlus, Check, CheckCircle2, ClipboardCheck, ExternalLink, FileText, Lock, Mail, Phone, ThumbsDown, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { EmployerShell } from "@/components/dashboard/employer-shell";
 import { ReportButton } from "@/components/safety/report-dialog";
 import { StatusBadge } from "@/components/ui/badge";
+import { TeenFeedbackForm } from "@/components/reviews/review-forms";
 import { Field } from "@/components/ui/field";
 import { Alert, EmptyState, PageLoader } from "@/components/ui/feedback";
 import { Modal } from "@/components/ui/modal";
@@ -27,6 +28,8 @@ export default function ApplicationDetail() {
   const [message, setMessage] = useState("");
   const [interviewOpen, setInterviewOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const { data: feedback, reload: reloadFeedback } = useAsync(() => data.getMyTeenFeedback(id), [id, app?.completed_at], { enabled: !!app?.completed_at });
   const viewedOnce = useRef(false);
 
   // Opening the application marks it as viewed (teen is notified).
@@ -41,6 +44,7 @@ export default function ApplicationDetail() {
   if (!app) return <EmployerShell title="Application"><EmptyState title="Application not found" body="It may belong to a different employer account." action={{ label: "All applicants", href: "/dashboard/employer/applications" }} /></EmployerShell>;
 
   const withdrawn = app.status === "withdrawn";
+  const completed = !!app.completed_at;
   const portfolio = safeUrl(app.portfolio_url);
 
   const changeStatus = async (status: ApplicationStatus, msg?: string) => {
@@ -132,11 +136,50 @@ export default function ApplicationDetail() {
           <div className="card space-y-2 p-5">
             <h2 className="font-bold">Update status</h2>
             <p className="text-xs text-navy-500">The applicant gets an in-app notification and an email for each change.</p>
-            <button type="button" disabled={withdrawn || busy} onClick={() => setInterviewOpen(true)} className="btn-primary w-full"><CalendarPlus className="h-4 w-4" aria-hidden="true" /> Request interview</button>
-            <button type="button" disabled={withdrawn || busy || app.status === "selected"} onClick={() => setDecision("selected")} className="btn w-full bg-emerald-600 text-white hover:bg-emerald-700"><Check className="h-4 w-4" aria-hidden="true" /> Select applicant</button>
-            <button type="button" disabled={withdrawn || busy || app.status === "not_selected"} onClick={() => setDecision("not_selected")} className="btn-outline w-full"><ThumbsDown className="h-4 w-4" aria-hidden="true" /> Decline</button>
+            <button type="button" disabled={withdrawn || completed || busy} onClick={() => setInterviewOpen(true)} className="btn-primary w-full"><CalendarPlus className="h-4 w-4" aria-hidden="true" /> Request interview</button>
+            <button type="button" disabled={withdrawn || completed || busy || app.status === "selected"} onClick={() => setDecision("selected")} className="btn w-full bg-emerald-600 text-white hover:bg-emerald-700"><Check className="h-4 w-4" aria-hidden="true" /> Select applicant</button>
+            <button type="button" disabled={withdrawn || completed || busy || app.status === "not_selected"} onClick={() => setDecision("not_selected")} className="btn-outline w-full"><ThumbsDown className="h-4 w-4" aria-hidden="true" /> Decline</button>
             {app.status === "submitted" && <button type="button" disabled={busy} onClick={() => changeStatus("viewed")} className="btn-ghost w-full">Mark as viewed</button>}
           </div>
+          {app.status === "selected" && (
+            <div className="card space-y-3 p-5">
+              <h2 className="flex items-center gap-2 font-bold"><ClipboardCheck className="h-4 w-4 text-navy-400" aria-hidden="true" /> Job completion</h2>
+              {!completed ? (
+                <>
+                  <p className="text-xs text-navy-500">Once the work is done and paid, mark it completed. The teen can then rate their experience, and you can leave private feedback.</p>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    className="btn-navy w-full"
+                    onClick={async () => {
+                      setBusy(true);
+                      try {
+                        await data.markApplicationCompleted(app.id);
+                        toast({ tone: "success", title: "Job marked completed" });
+                        reload(true);
+                      } catch (e) {
+                        toast({ tone: "error", title: "Couldn't update", body: errorMessage(e) });
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    Mark job completed
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="flex items-center gap-1.5 text-sm text-navy-600"><CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" /> Completed {formatDate(app.completed_at)}</p>
+                  {feedback ? (
+                    <p className="rounded-2xl bg-cream-100 p-3 text-xs text-navy-600">You sent private feedback to TaskTeens on {formatDate(feedback.created_at)}. Thank you.</p>
+                  ) : (
+                    <button type="button" className="btn-outline w-full" onClick={() => setFeedbackOpen(true)}>Leave private feedback</button>
+                  )}
+                  <p className="text-[11px] text-navy-400">Teens aren&apos;t publicly rated on TaskTeens. Feedback goes only to our team.</p>
+                </>
+              )}
+            </div>
+          )}
           <div className="rounded-3xl border border-navy-100 bg-white p-5 text-sm">
             <h2 className="font-bold">Before you meet</h2>
             <ul className="mt-2 space-y-1 text-navy-600">
@@ -165,6 +208,10 @@ export default function ApplicationDetail() {
             {busy ? "Sending…" : decision === "selected" ? "Select & notify" : "Decline & notify"}
           </button>
         </div>
+      </Modal>
+
+      <Modal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} title="Private feedback to TaskTeens" description={`${app.applicant_name} · ${app.job.title}`}>
+        {feedbackOpen && <TeenFeedbackForm applicationId={app.id} onDone={() => { setFeedbackOpen(false); reloadFeedback(true); }} />}
       </Modal>
 
       <InterviewModal open={interviewOpen} onClose={() => setInterviewOpen(false)} applicationId={app.id} name={app.applicant_name} onDone={() => { setInterviewOpen(false); reload(true); }} />

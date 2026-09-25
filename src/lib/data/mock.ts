@@ -24,6 +24,7 @@ import { matchesFilters, sortJobs } from "./filters";
 import { uid } from "../utils";
 import { employerNewApplicationEmail, statusUpdateEmail, teenConfirmationEmail, safetyReportEmail, type EmailMessage } from "../email/templates";
 import { APPLICATION_STATUS_LABEL, SAFETY_EMAIL } from "../constants";
+import { summarizeEmployer } from "../ratings";
 
 const DB_KEY = "taskteens-demo-db";
 const SESSION_KEY = "taskteens-demo-session";
@@ -415,6 +416,8 @@ export function createMockClient(): DataClient {
         viewed_at: null,
         status_updated_at: now(),
         created_at: now(),
+        completed_at: null,
+        completed_by: null,
       };
       if (existing) db.applications.splice(db.applications.indexOf(existing), 1); // re-apply after withdrawal
       db.applications.unshift(app);
@@ -453,6 +456,7 @@ export function createMockClient(): DataClient {
       const db = load();
       const a = db.applications.find((x) => x.id === id && x.teen_id === me.id);
       if (!a) throw new DataError("not_found", "Application not found.");
+      if (a.completed_at) throw new DataError("invalid", "This job is already marked completed.");
       a.status = "withdrawn";
       a.status_updated_at = now();
       const job = db.jobs.find((j) => j.id === a.job_id);
@@ -696,6 +700,7 @@ export function createMockClient(): DataClient {
       if (!a) throw new DataError("not_found", "Application not found.");
       if (a.status === "withdrawn") throw new DataError("withdrawn", "The applicant withdrew this application.");
       if (status === "withdrawn") throw new DataError("forbidden", "Only the applicant can withdraw.");
+      if (a.completed_at) throw new DataError("invalid", "This job is already marked completed.");
       a.status = status;
       a.status_updated_at = now();
       if (status !== "submitted") a.viewed_at ??= now();
@@ -744,6 +749,89 @@ export function createMockClient(): DataClient {
       const me = requireUser("employer");
       const db = load();
       return db.interview_requests.filter((i) => i.employer_id === me.id).map((i) => interviewCtx(db, i));
+    },
+
+    // ------------------------------------------------- completion & ratings
+    async markApplicationCompleted(applicationId) {
+      await wait(150);
+      const me = requireUser(["teen", "employer"]);
+      const db = load();
+      const a = db.applications.find((x) => x.id === applicationId && (x.teen_id === me.id || x.employer_id === me.id));
+      if (!a) throw new DataError("not_found", "Application not found.");
+      if (a.status !== "selected") throw new DataError("invalid", "Only a job you were selected for can be marked completed.");
+      if (a.completed_at) return;
+      a.completed_at = now();
+      a.completed_by = me.id === a.teen_id ? "teen" : "employer";
+      const job = db.jobs.find((j) => j.id === a.job_id);
+      if (a.completed_by === "teen")
+        pushNotification(db, a.employer_id, "application_status", "Job marked completed", `${a.applicant_name} marked “${job?.title}” as completed. You can leave private feedback for TaskTeens.`, `/dashboard/employer/applications/${a.id}`);
+      else
+        pushNotification(db, a.teen_id, "application_status", "Job marked completed", `“${job?.title}” was marked completed. You can now rate this employer.`, "/dashboard/teen/applications");
+      persist();
+    },
+    async getEmployerRatings(employerIds) {
+      const db = load();
+      const out: Record<string, ReturnType<typeof summarizeEmployer>> = {};
+      for (const id of new Set(employerIds)) {
+        const reviews = db.employer_reviews.filter((r) => r.employer_id === id && r.status === "published");
+        const completed = db.applications.filter((a) => a.employer_id === id && a.completed_at).length;
+        const jobIds = new Set(db.jobs.filter((j) => j.employer_id === id).map((j) => j.id));
+        const unresolved = db.reports.some(
+          (r) => (r.status === "open" || r.status === "investigating") &&
+            ((r.target_type === "job" && r.target_id && jobIds.has(r.target_id)) || (r.target_type === "user" && r.target_id === id)),
+        );
+        out[id] = summarizeEmployer(id, reviews, completed, unresolved);
+      }
+      return out;
+    },
+    async getMyReviewForApplication(applicationId) {
+      const me = requireUser("teen");
+      return load().employer_reviews.find((r) => r.application_id === applicationId && r.teen_id === me.id) ?? null;
+    },
+    async submitEmployerReview(applicationId, input) {
+      await wait(200);
+      const me = requireUser("teen");
+      const db = load();
+      const a = db.applications.find((x) => x.id === applicationId && x.teen_id === me.id);
+      if (!a) throw new DataError("not_found", "Application not found.");
+      if (a.status !== "selected" || !a.completed_at) throw new DataError("invalid", "You can rate an employer after the job is marked completed.");
+      if (db.employer_reviews.some((r) => r.application_id === applicationId)) throw new DataError("duplicate", "You already rated this job.");
+      if (!Number.isInteger(input.stars) || input.stars < 1 || input.stars > 5) throw new DataError("invalid", "Choose 1 to 5 stars.");
+      db.employer_reviews.unshift({
+        id: uid("rev"), application_id: a.id, job_id: a.job_id, employer_id: a.employer_id, teen_id: me.id, stars: input.stars,
+        paid_as_promised: input.paid_as_promised, matched_listing: input.matched_listing, felt_safe: input.felt_safe, respectful: input.respectful,
+        private_note: input.private_note?.trim().slice(0, 1000) || null, status: "published", created_at: now(),
+      });
+      persist();
+    },
+    async listMyEmployerReviews() {
+      const me = requireUser("employer");
+      const db = load();
+      return db.employer_reviews
+        .filter((r) => r.employer_id === me.id)
+        .map((r) => ({
+          id: r.id, job_title: db.jobs.find((j) => j.id === r.job_id)?.title ?? "Job", stars: r.stars, paid_as_promised: r.paid_as_promised,
+          matched_listing: r.matched_listing, felt_safe: r.felt_safe, respectful: r.respectful, status: r.status, created_at: r.created_at,
+        }));
+    },
+    async getMyTeenFeedback(applicationId) {
+      const me = requireUser("employer");
+      return load().teen_feedback.find((f) => f.application_id === applicationId && f.employer_id === me.id) ?? null;
+    },
+    async submitTeenFeedback(applicationId, input) {
+      await wait(200);
+      const me = requireUser("employer");
+      const db = load();
+      const a = db.applications.find((x) => x.id === applicationId && x.employer_id === me.id);
+      if (!a) throw new DataError("not_found", "Application not found.");
+      if (a.status !== "selected" || !a.completed_at) throw new DataError("invalid", "Mark the job completed before leaving feedback.");
+      if (db.teen_feedback.some((f) => f.application_id === applicationId)) throw new DataError("duplicate", "You already left feedback for this job.");
+      db.teen_feedback.unshift({
+        id: uid("tfb"), application_id: a.id, job_id: a.job_id, employer_id: me.id, teen_id: a.teen_id,
+        showed_up: input.showed_up, communicated: input.communicated, completed_job: input.completed_job,
+        note: input.note?.trim().slice(0, 1000) || null, created_at: now(),
+      });
+      persist();
     },
 
     // ----------------------------------------------------------------- safety
@@ -936,6 +1024,36 @@ export function createMockClient(): DataClient {
       const db = load();
       audit(db, me.id, "moderation.note", targetType, targetId, note);
       persist();
+    },
+
+    async adminListReviews() {
+      requireUser("admin");
+      const db = load();
+      return db.employer_reviews.map((r) => ({
+        ...r,
+        employer_name: db.employer_profiles.find((e) => e.user_id === r.employer_id)?.display_name ?? "Employer",
+        job_title: db.jobs.find((j) => j.id === r.job_id)?.title ?? "Job",
+        teen_name: db.users.find((u) => u.id === r.teen_id)?.full_name ?? "Teen",
+      }));
+    },
+    async adminSetReviewStatus(id, status, note) {
+      const me = requireUser("admin");
+      const db = load();
+      const r = db.employer_reviews.find((x) => x.id === id);
+      if (!r) throw new DataError("not_found", "Review not found.");
+      r.status = status;
+      audit(db, me.id, status === "hidden" ? "review.hide" : "review.restore", "review", id, note);
+      persist();
+    },
+    async adminListTeenFeedback() {
+      requireUser("admin");
+      const db = load();
+      return db.teen_feedback.map((f) => ({
+        ...f,
+        employer_name: db.employer_profiles.find((e) => e.user_id === f.employer_id)?.display_name ?? "Employer",
+        job_title: db.jobs.find((j) => j.id === f.job_id)?.title ?? "Job",
+        teen_name: db.users.find((u) => u.id === f.teen_id)?.full_name ?? "Teen",
+      }));
     },
 
     // --------------------------------------------------------------- demo

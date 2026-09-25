@@ -28,6 +28,8 @@ If no Supabase environment variables are set, the app runs in **local demonstrat
 
 Demo mode is **not secure**, because everything lives in the browser. It exists so you can test the interface.
 
+Ratings demo: sign in as Maya → **My applications** → "Fall yard cleanup" is completed, so click **Rate this employer**. "Farmers-market pop-up" is selected but still in progress, so you can **Mark job as completed** first. Plaza Corner Books has 6 completed jobs and shows the **Reliable Employer** badge. Solano Paws has 3 ratings, so its score shows. Gilman Street Café has only 2, so its score is still hidden. As Solano Paws, open the applicant "Demo Worker D." to leave private feedback, and see **Your ratings** on the dashboard (with a Dispute button). As admin, open **Ratings & feedback**.
+
 Suggested demo: sign in as Maya → apply to "After-school dog walker" → sign in as Solano Paws → open the application (it gets marked Viewed) → Select her → sign back in as Maya and see the notification → sign in as admin → approve the pending listing and look at the audit log.
 
 ---
@@ -62,6 +64,8 @@ src/
 supabase/
   migrations/…_schema.sql     Tables, constraints, indexes
   migrations/…_security.sql   Helper functions, triggers, RLS, storage policies, admin RPCs
+  migrations/…_remove_oakland.sql
+  migrations/…_ratings.sql    Job completion, employer ratings, private teen feedback, review disputes
   seed.sql                    Demo data (generated)
 scripts/generate-seed-sql.ts
 ```
@@ -89,7 +93,7 @@ Copy `.env.example` to `.env.local`.
 ## Supabase setup
 
 1. Create a project at supabase.com.
-2. Run the migrations, either with the CLI (`supabase link` then `supabase db push`) or by pasting the two files in `supabase/migrations/` into the SQL editor, in order.
+2. Run the migrations, either with the CLI (`supabase link` then `supabase db push`) or by pasting each file in `supabase/migrations/` into the SQL editor, in filename order.
 3. **Auth → Providers → Email:** turn on "Confirm email".
 4. **Auth → URL configuration:** set Site URL to your domain and add `https://YOUR_DOMAIN/auth/callback` to the redirect URLs.
 5. (Optional) Load the demo data with `supabase/seed.sql`. It creates the same fictional accounts, using password `demo1234`. **Don't run it on a production project with real users.** If you edit `src/lib/data/seed.ts`, regenerate the file with `npm run seed:sql`.
@@ -109,6 +113,7 @@ Copy `.env.example` to `.env.local`.
 - **notifications:** only the owner can read them. They're created only by `SECURITY DEFINER` triggers (new application, status change, interview, moderation, verification).
 - **reports:** anyone can file one, including signed-out visitors. Only the reporter and admins can read them.
 - **admin_audit_logs:** admins can read them. Rows are written only by admin RPCs (`admin_moderate_job`, `admin_review_verification`, `admin_set_user_status`, `admin_update_report`, `admin_add_note`) and by audit triggers on categories, service areas and settings. Admin moderation writes go through these RPCs, so every action gets logged.
+- **employer_reviews / teen_feedback:** no one can insert or update rows directly. Writes go through `submit_employer_review` (only the hired teen, only after the job is marked completed, once per job) and `submit_teen_feedback` (only that job's employer). A teen can read their own review. Employers never read review rows: `my_employer_reviews()` returns them without the teen's name or private note, and dates are rounded to the month. The public sees only `employer_rating_summaries()` aggregates. The score stays hidden until an employer has 3 published ratings, and **Reliable Employer** requires 5+ completed jobs and no open or investigating reports. Teen feedback is visible to admins only. Admins hide or restore ratings through `admin_set_review_status` (audited). Only `mark_application_completed` can set `completed_at`.
 - **Storage:** résumés live under `{teen_id}/…`. An employer can read one only if an application to their listing references it, and they get it through a 10-minute signed URL.
 
 These policies were tested against Postgres 16 with Supabase's `auth` and `storage` schemas stubbed. The tests covered escalation attempts, cross-tenant reads, application spoofing, duplicate applications, self-verification and non-admins calling the RPCs.
@@ -152,6 +157,7 @@ Fonts load from Google Fonts at runtime, and photos come from Unsplash (with gra
 - Employer dashboard: stats, listings CRUD (draft, publish, pause, close, delete, image upload), applicants grouped by job with status filters, auto-mark-as-viewed, interview requests, select/decline with a message, private notes, block and report
 - Admin: reports queue (emergencies first), listing moderation (approve, reject, pause, remove, restore, feature), verification review, user suspension, categories and service areas, configurable age/consent/permit/approval rules, audit log, and standalone moderation notes
 - Safety: a report form (including an emergency route at `/report?severity=emergency`) and block tools. Forms reject street addresses in listings and SSN-like numbers in applications
+- Ratings: employers get public ratings after completed jobs (stars plus paid as promised, matched listing, felt safe, respectful). Only aggregates are shown, and the score appears after 3 ratings. There's a Reliable Employer badge, private employer feedback about teens (teens are never publicly rated), rating disputes through reports, and admin hide/restore
 - Legal pages (Privacy, Terms, Community Guidelines) marked as starter drafts, plus a Safety center
 
 **Needs production credentials or more work:**

@@ -5,7 +5,8 @@ import { Badge, DemoBadge, VerifiedBadge } from "@/components/ui/badge";
 import { SafeImage } from "@/components/ui/image";
 import { Skeleton } from "@/components/ui/feedback";
 import { RECURRENCE_LABEL, WORK_MODE_LABEL } from "@/lib/constants";
-import type { JobWithEmployer } from "@/lib/types";
+import type { EmployerRatingSummary, JobWithEmployer } from "@/lib/types";
+import { RatingInline, useEmployerRatings } from "@/components/reviews/ratings";
 import { categoryName, cn, formatPay, timeAgo } from "@/lib/utils";
 
 export function SaveButton({ saved, onToggle, className, label }: { saved: boolean; onToggle: () => void; className?: string; label?: string }) {
@@ -31,7 +32,7 @@ export function SaveButton({ saved, onToggle, className, label }: { saved: boole
   );
 }
 
-export function JobCard({ job, saved, onToggleSave }: { job: JobWithEmployer; saved: boolean; onToggleSave: () => void }) {
+export function JobCard({ job, saved, onToggleSave, rating }: { job: JobWithEmployer; saved: boolean; onToggleSave: () => void; rating?: EmployerRatingSummary }) {
   return (
     <article className="group card relative flex h-full flex-col overflow-hidden transition duration-200 hover:-translate-y-0.5 hover:shadow-lift">
       <div className="relative aspect-[16/9] overflow-hidden">
@@ -49,6 +50,7 @@ export function JobCard({ job, saved, onToggleSave }: { job: JobWithEmployer; sa
           <span className="font-medium text-navy-700">{job.employer.display_name}</span>
           <VerifiedBadge status={job.employer.verification_status} />
         </div>
+        <RatingInline rating={rating} className="mt-1" />
         <h3 className="mt-1.5 text-lg font-bold leading-snug">
           <Link href={`/jobs/${job.id}`} className="after:absolute after:inset-0 focus:outline-none">
             {job.title}
@@ -111,13 +113,14 @@ export function JobCardSkeleton() {
 }
 
 export function JobGrid({ jobs, loading, saved, onToggleSave, skeletons = 6 }: { jobs?: JobWithEmployer[]; loading: boolean; saved: Set<string>; onToggleSave: (id: string) => void; skeletons?: number }) {
+  const ratings = useEmployerRatings((jobs ?? []).map((j) => j.employer_id));
   return (
     <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3" aria-busy={loading}>
       {loading
         ? Array.from({ length: skeletons }).map((_, i) => <JobCardSkeleton key={i} />)
         : jobs?.map((j) => (
             <div key={j.id} className="relative">
-              <JobCard job={j} saved={saved.has(j.id)} onToggleSave={() => onToggleSave(j.id)} />
+              <JobCard job={j} saved={saved.has(j.id)} onToggleSave={() => onToggleSave(j.id)} rating={ratings[j.employer_id]} />
             </div>
           ))}
     </div>

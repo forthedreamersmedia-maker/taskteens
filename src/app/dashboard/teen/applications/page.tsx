@@ -1,5 +1,5 @@
 "use client";
-import { ChevronDown, FileText } from "lucide-react";
+import { CheckCircle2, ChevronDown, FileText, Star } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { TeenShell } from "@/components/dashboard/teen-shell";
@@ -8,6 +8,8 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/feedback";
 import { SafeImage } from "@/components/ui/image";
 import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
+import { StarDisplay } from "@/components/reviews/ratings";
+import { RateEmployerForm } from "@/components/reviews/review-forms";
 import { useData } from "@/lib/auth-context";
 import { useAsync } from "@/lib/hooks/use-async";
 import { APPLICATION_STATUS_LABEL, TRANSPORTATION_LABEL } from "@/lib/constants";
@@ -40,6 +42,14 @@ export default function TeenApplications() {
   const [filter, setFilter] = useState<"all" | "active" | "closed">("all");
   const [withdrawing, setWithdrawing] = useState<ApplicationWithJob | null>(null);
   const [busy, setBusy] = useState(false);
+  const [rating, setRating] = useState<ApplicationWithJob | null>(null);
+  const [completing, setCompleting] = useState<ApplicationWithJob | null>(null);
+  const doneIds = (apps ?? []).filter((a) => a.completed_at).map((a) => a.id).join(",");
+  const { data: reviews, reload: reloadReviews } = useAsync(async () => {
+    const ids = doneIds ? doneIds.split(",") : [];
+    const rows = await Promise.all(ids.map((id) => data.getMyReviewForApplication(id)));
+    return Object.fromEntries(ids.map((id, i) => [id, rows[i]]));
+  }, [doneIds]);
   useEffect(() => data.subscribeNotifications(() => reload(true)), [data, reload]);
 
   const list = (apps ?? []).filter((a) => filter === "all" || (filter === "active" ? !["withdrawn", "not_selected"].includes(a.status) : ["withdrawn", "not_selected"].includes(a.status)));
@@ -75,6 +85,25 @@ export default function TeenApplications() {
                   </div>
                   <div className="mt-3"><Progress status={a.status} /></div>
                   <p className="mt-2 text-xs text-navy-400">Applied {formatDate(a.created_at)} · last update {timeAgo(a.status_updated_at)}</p>
+                  {a.status === "selected" && (
+                    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl bg-cream-100 px-3 py-2.5 text-sm">
+                      {!a.completed_at ? (
+                        <>
+                          <span className="text-navy-600">Finished this job?</span>
+                          <button type="button" className="btn-outline btn-sm" onClick={() => setCompleting(a)}>Mark job as completed</button>
+                        </>
+                      ) : reviews?.[a.id] ? (
+                        <span className="flex items-center gap-2 text-navy-600">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" /> Completed {formatDate(a.completed_at)} · You rated this employer <StarDisplay value={reviews[a.id]!.stars} />
+                        </span>
+                      ) : (
+                        <>
+                          <span className="flex items-center gap-1.5 text-navy-600"><CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" /> Completed {formatDate(a.completed_at)}</span>
+                          <button type="button" className="btn-coral btn-sm" onClick={() => setRating(a)}><Star className="h-4 w-4" aria-hidden="true" /> Rate this employer</button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <details className="group border-t border-navy-50 px-5 py-3 [&_summary::-webkit-details-marker]:hidden">
@@ -127,6 +156,48 @@ export default function TeenApplications() {
             {busy ? "Withdrawing…" : "Withdraw"}
           </button>
         </div>
+      </Modal>
+      <Modal open={!!completing} onClose={() => setCompleting(null)} title="Mark this job as completed?" description={completing ? `${completing.job.title} · ${completing.employer_name}` : undefined} size="sm">
+        <p className="text-sm text-navy-600">Only mark it completed once the work is done. After that, you can rate the employer. If you haven&apos;t been paid yet, you can still <Link href="/payment-policy" className="link">report a payment problem</Link>.</p>
+        <div className="mt-5 flex justify-end gap-2">
+          <button type="button" className="btn-outline" onClick={() => setCompleting(null)}>Not yet</button>
+          <button
+            type="button"
+            className="btn-primary"
+            disabled={busy}
+            onClick={async () => {
+              if (!completing) return;
+              setBusy(true);
+              try {
+                await data.markApplicationCompleted(completing.id);
+                toast({ tone: "success", title: "Marked as completed", body: "You can now rate this employer." });
+                const a = completing;
+                setCompleting(null);
+                reload(true);
+                setRating({ ...a, completed_at: new Date().toISOString(), completed_by: "teen" });
+              } catch (e) {
+                toast({ tone: "error", title: "Couldn't update", body: errorMessage(e) });
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {busy ? "Saving…" : "Yes, it's done"}
+          </button>
+        </div>
+      </Modal>
+      <Modal open={!!rating} onClose={() => setRating(null)} title="Rate this employer" description={rating ? `${rating.job.title} · ${rating.employer_name}` : undefined}>
+        {rating && (
+          <RateEmployerForm
+            applicationId={rating.id}
+            employerName={rating.employer_name}
+            jobId={rating.job_id}
+            onDone={() => {
+              setRating(null);
+              reloadReviews(true);
+            }}
+          />
+        )}
       </Modal>
     </TeenShell>
   );

@@ -126,7 +126,7 @@ export const employerOnboardingSchema = z.object({
 });
 
 export const reportSchema = z.object({
-  target_type: z.enum(["job", "user", "application", "other"]),
+  target_type: z.enum(["job", "user", "application", "review", "other"]),
   target_id: z.string().nullable(),
   reason: z.string().min(1, "Choose a reason."),
   details: z.string().trim().min(10, "Please describe what happened (10+ characters).").max(4000),

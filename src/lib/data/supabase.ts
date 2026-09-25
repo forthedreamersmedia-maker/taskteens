@@ -14,6 +14,10 @@ import type {
   UserRow,
   PlatformSettings,
   TeenProfile,
+  EmployerRatingSummary,
+  EmployerReview,
+  EmployerReviewForEmployer,
+  TeenFeedback,
 } from "../types";
 import { DataError, type DataClient, type InterviewWithContext } from "./types";
 import { matchesFilters, sortJobs } from "./filters";
@@ -517,6 +521,56 @@ export function createSupabaseClient(): DataClient {
       return interviewsWithCtx(data ?? []);
     },
 
+    // ------------------------------------------------- completion & ratings
+    async markApplicationCompleted(applicationId) {
+      const { error } = await sb.rpc("mark_application_completed", { p_application: applicationId });
+      if (error) fail(error);
+    },
+    async getEmployerRatings(employerIds) {
+      const ids = [...new Set(employerIds)].filter(Boolean);
+      if (!ids.length) return {};
+      const { data, error } = await sb.rpc("employer_rating_summaries", { p_employers: ids });
+      if (error) fail(error);
+      const out: Record<string, EmployerRatingSummary> = {};
+      for (const r of (data ?? []) as Raw[]) {
+        const n = (v: unknown) => (v == null ? null : Number(v));
+        out[String(r.employer_id)] = {
+          employer_id: String(r.employer_id), completed_jobs: Number(r.completed_jobs), review_count: Number(r.review_count),
+          avg_stars: n(r.avg_stars), pct_paid: n(r.pct_paid), pct_matched: n(r.pct_matched), pct_respectful: n(r.pct_respectful), pct_safe: n(r.pct_safe),
+          reliable: Boolean(r.reliable),
+        };
+      }
+      return out;
+    },
+    async getMyReviewForApplication(applicationId) {
+      const { data, error } = await sb.from("employer_reviews").select("*").eq("application_id", applicationId).maybeSingle();
+      if (error) fail(error);
+      return (data as EmployerReview) ?? null;
+    },
+    async submitEmployerReview(applicationId, input) {
+      const { error } = await sb.rpc("submit_employer_review", {
+        p_application: applicationId, p_stars: input.stars, p_paid: input.paid_as_promised, p_matched: input.matched_listing,
+        p_safe: input.felt_safe, p_respectful: input.respectful, p_note: input.private_note ?? null,
+      });
+      if (error) fail(error);
+    },
+    async listMyEmployerReviews() {
+      const { data, error } = await sb.rpc("my_employer_reviews");
+      if (error) fail(error);
+      return (data ?? []) as EmployerReviewForEmployer[];
+    },
+    async getMyTeenFeedback(applicationId) {
+      const { data, error } = await sb.from("teen_feedback").select("*").eq("application_id", applicationId).maybeSingle();
+      if (error) fail(error);
+      return (data as TeenFeedback) ?? null;
+    },
+    async submitTeenFeedback(applicationId, input) {
+      const { error } = await sb.rpc("submit_teen_feedback", {
+        p_application: applicationId, p_showed_up: input.showed_up, p_communicated: input.communicated, p_completed: input.completed_job, p_note: input.note ?? null,
+      });
+      if (error) fail(error);
+    },
+
     // ----------------------------------------------------------------- safety
     async createReport(input) {
       const { id } = await api<{ id: string }>("/api/reports", input);
@@ -634,6 +688,36 @@ export function createSupabaseClient(): DataClient {
     async adminAddNote(targetType, targetId, note) {
       const { error } = await sb.rpc("admin_add_note", { p_target_type: targetType, p_target_id: targetId, p_note: note });
       if (error) fail(error);
+    },
+    async adminListReviews() {
+      const { data, error } = await sb
+        .from("employer_reviews")
+        .select("*, job:jobs(title), employer:employer_profiles(display_name), teen:users!employer_reviews_teen_id_fkey(full_name)")
+        .order("created_at", { ascending: false })
+        .limit(300);
+      if (error) fail(error);
+      return ((data ?? []) as Raw[]).map((r) => {
+        const x = r as Raw & { job?: { title: string }; employer?: { display_name: string }; teen?: { full_name: string } };
+        const { job, employer, teen, ...rest } = x;
+        return { ...(rest as unknown as EmployerReview), job_title: job?.title ?? "Job", employer_name: employer?.display_name ?? "Employer", teen_name: teen?.full_name ?? "Teen" };
+      });
+    },
+    async adminSetReviewStatus(id, status, note) {
+      const { error } = await sb.rpc("admin_set_review_status", { p_review: id, p_status: status, p_note: note });
+      if (error) fail(error);
+    },
+    async adminListTeenFeedback() {
+      const { data, error } = await sb
+        .from("teen_feedback")
+        .select("*, job:jobs(title), employer:employer_profiles(display_name), teen:users!teen_feedback_teen_id_fkey(full_name)")
+        .order("created_at", { ascending: false })
+        .limit(300);
+      if (error) fail(error);
+      return ((data ?? []) as Raw[]).map((r) => {
+        const x = r as Raw & { job?: { title: string }; employer?: { display_name: string }; teen?: { full_name: string } };
+        const { job, employer, teen, ...rest } = x;
+        return { ...(rest as unknown as TeenFeedback), job_title: job?.title ?? "Job", employer_name: employer?.display_name ?? "Employer", teen_name: teen?.full_name ?? "Teen" };
+      });
     },
   };
   return client;

@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/feedback";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
 import { REPORT_REASONS } from "@/lib/constants";
+import { REVIEW_DISPUTE_REASONS } from "@/lib/ratings";
 import type { ReportTarget } from "@/lib/types";
 import { fieldErrors, reportSchema } from "@/lib/validation";
 import { errorMessage } from "@/lib/utils";
@@ -54,7 +55,7 @@ export function ReportForm({ targetType, targetId, onDone, defaultSeverity = "no
       <Field label="What's the issue?" required error={errors.reason}>
         <select className="input" value={reason} onChange={(e) => setReason(e.target.value)}>
           <option value="">Choose a reason</option>
-          {REPORT_REASONS.map((r) => (
+          {(targetType === "review" ? REVIEW_DISPUTE_REASONS : REPORT_REASONS).map((r) => (
             <option key={r}>{r}</option>
           ))}
         </select>
@@ -100,7 +101,12 @@ export function ReportButton({ targetType, targetId, label = "Report", className
       <button type="button" onClick={() => setOpen(true)} className={className ?? "btn-ghost btn-sm text-navy-500"}>
         <Flag className="h-3.5 w-3.5" aria-hidden="true" /> {label}
       </button>
-      <Modal open={open} onClose={() => setOpen(false)} title="Report a concern" description="Reports go to TaskTeens moderators. The person you report is not told who reported them.">
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={targetType === "review" ? "Dispute this rating" : "Report a concern"}
+        description={targetType === "review" ? "A TaskTeens moderator will review the rating. It stays visible unless a moderator hides it." : "Reports go to TaskTeens moderators. The person you report is not told who reported them."}
+      >
         <ReportForm targetType={targetType} targetId={targetId} />
       </Modal>
     </>

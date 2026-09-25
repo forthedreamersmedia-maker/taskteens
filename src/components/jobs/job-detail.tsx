@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/toast";
 import { ReportButton } from "@/components/safety/report-dialog";
 import { JobGrid, SaveButton } from "./job-card";
 import { useSavedJobs } from "./use-saved-jobs";
+import { RatingInline, RatingSummary, useEmployerRatings } from "@/components/reviews/ratings";
 import { useAuth } from "@/lib/auth-context";
 import { useAsync } from "@/lib/hooks/use-async";
 import { PAY_TYPE_LABEL, RECURRENCE_LABEL, TRANSPORTATION_LABEL, WORK_MODE_LABEL } from "@/lib/constants";
@@ -22,6 +23,7 @@ export function JobDetail({ id }: { id: string }) {
   const { data: myApp } = useAsync(() => data.getMyApplicationForJob(id), [id, session?.user.id], { enabled: session?.user.role === "teen" });
   const { saved, toggle } = useSavedJobs();
   const [blocked, setBlocked] = useState(false);
+  const rating = useEmployerRatings([job?.employer_id])[job?.employer_id ?? ""];
 
   if (loading) return <PageLoader label="Loading job…" />;
   if (error) return <div className="container-page py-16"><ErrorState message={error} onRetry={reload} /></div>;
@@ -96,6 +98,7 @@ export function JobDetail({ id }: { id: string }) {
             <span>{job.employer.employer_type === "business" ? "Local business" : "Individual / family"}</span>
             <VerifiedBadge status={job.employer.verification_status} />
           </p>
+          <RatingInline rating={rating} className="mt-1.5 text-sm" />
 
           <dl className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {facts.map((f) => (
@@ -161,6 +164,7 @@ export function JobDetail({ id }: { id: string }) {
                 </a>
               )}
             </div>
+            <div className="mt-4"><RatingSummary rating={rating} /></div>
             <div className="mt-4 rounded-2xl bg-cream-100 p-3 text-sm">
               <p className="flex items-center gap-2 font-semibold">
                 {job.employer.verification_status === "verified" ? <BadgeCheck className="h-4 w-4 text-bay-600" aria-hidden="true" /> : <Info className="h-4 w-4 text-navy-400" aria-hidden="true" />}
