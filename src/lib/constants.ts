@@ -13,7 +13,7 @@ import type {
 } from "./types";
 
 export const SITE_NAME = "TaskTeens";
-export const TAGLINE = "Local jobs. Real experience. Built for teens.";
+export const TAGLINE = "Making Job Hunting Easier For Teens";
 export const CONTACT_EMAIL = "hello@taskteens.com";
 export const SAFETY_EMAIL = "safety@taskteens.com";
 

@@ -8,9 +8,9 @@ import { SITE_URL } from "@/lib/config";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: "TaskTeens — Local jobs. Real experience. Built for teens.", template: "%s · TaskTeens" },
+  title: { default: "TaskTeens — Making Job Hunting Easier For Teens", template: "%s · TaskTeens" },
   description: "TaskTeens connects East Bay teenagers in Berkeley, Albany and El Cerrito with safe, legitimate work from local families and small businesses.",
-  openGraph: { title: "TaskTeens — Bay Area Built", description: "Local jobs. Real experience. Built for teens.", type: "website", images: ["/hero-bay-sm.jpg"] },
+  openGraph: { title: "TaskTeens — Bay Area Built", description: "Making Job Hunting Easier For Teens.", type: "website", images: ["/hero-bay-sm.jpg"] },
   icons: { icon: [{ url: "/favicon.ico?v=2", sizes: "any" }, { url: "/icon.png?v=2", type: "image/png" }], apple: "/apple-icon.png?v=2" },
 };
 

@@ -36,7 +36,7 @@ export default function HomePage() {
               <MapPin className="h-3.5 w-3.5 text-coral-300" aria-hidden="true" /> Berkeley · Albany · El Cerrito · East Bay
             </p>
             <h1 className="mt-5 text-4xl font-extrabold leading-[1.05] text-white drop-shadow-sm sm:text-5xl lg:text-6xl">
-              Local jobs. <span className="text-bay-300">Real experience.</span> <span className="relative whitespace-nowrap">Built for teens.<svg aria-hidden="true" viewBox="0 0 300 12" className="absolute -bottom-2 left-0 h-3 w-full text-coral-400"><path d="M2 9c60-6 140-8 296-3" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" /></svg></span>
+              Making Job Hunting <span className="text-bay-300">Easier</span> <span className="relative whitespace-nowrap">For Teens<svg aria-hidden="true" viewBox="0 0 300 12" className="absolute -bottom-2 left-0 h-3 w-full text-coral-400"><path d="M2 9c60-6 140-8 296-3" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" /></svg></span>
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-white/85">
               TaskTeens connects East Bay teenagers with neighborhood families and small businesses who need a hand — tutoring, pet care, café shifts, yard work, tech help and more. Clear pay, clear schedules, safety built in.
