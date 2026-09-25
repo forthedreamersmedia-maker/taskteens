@@ -5,7 +5,7 @@ import { CONTACT_EMAIL } from "@/lib/constants";
 const COLS = [
   { title: "Teens", links: [["Find jobs", "/jobs"], ["How it works", "/how-it-works"], ["Create a teen account", "/auth/sign-up?role=teen"], ["Safety tips", "/safety"]] },
   { title: "Employers", links: [["Hire teens", "/hire"], ["Post a job", "/auth/sign-up?role=employer&next=/dashboard/employer/listings/new"], ["Employer conduct rules", "/guidelines#employers"], ["Verification", "/hire#verification"]] },
-  { title: "Trust & legal", links: [["Safety center", "/safety"], ["Report a concern", "/report"], ["Community guidelines", "/guidelines"], ["Privacy policy", "/privacy"], ["Terms of use", "/terms"]] },
+  { title: "Trust & legal", links: [["Safety center", "/safety"], ["Report a concern", "/report"], ["Community guidelines", "/guidelines"], ["Payment policy", "/payment-policy"], ["Privacy policy", "/privacy"], ["Terms of use", "/terms"]] },
   { title: "Service area", links: [["Berkeley", "/jobs?city=Berkeley"], ["Albany", "/jobs?city=Albany"], ["El Cerrito", "/jobs?city=El%20Cerrito"], ["All service areas", "/service-area"]] },
 ];
 

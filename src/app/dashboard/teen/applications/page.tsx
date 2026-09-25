@@ -88,6 +88,11 @@ export default function TeenApplications() {
                   <div><dt className="text-xs text-navy-400">Skills</dt><dd>{a.skills.join(", ")}</dd></div>
                   <div><dt className="text-xs text-navy-400">Résumé</dt><dd>{a.resume_name ?? "None attached"}</dd></div>
                 </dl>
+                {a.status === "selected" && (
+                  <p className="mt-4 text-sm text-navy-600">
+                    Problem getting paid for this job? <Link href={`/report/payment?job=${a.job_id}`} className="link">Report a payment issue</Link>
+                  </p>
+                )}
                 {!["withdrawn", "not_selected", "selected"].includes(a.status) && (
                   <button type="button" onClick={() => setWithdrawing(a)} className="btn-danger btn-sm mt-4">Withdraw application</button>
                 )}

@@ -1,5 +1,6 @@
 "use client";
 import { AlertOctagon, Phone } from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { ReportForm } from "@/components/safety/report-dialog";
@@ -17,6 +18,10 @@ function ReportInner() {
       </div>
       <h1 className="mt-10 text-3xl font-bold">Report a concern</h1>
       <p className="mt-2 text-navy-500">Anyone can report — you don&apos;t need an account. Reports go directly to TaskTeens moderators and are never shared with the person you&apos;re reporting.</p>
+      <Link href="/report/payment" className="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-navy-100 bg-white p-4 text-sm hover:border-coral-300">
+        <span><strong>Didn&apos;t get paid for a job?</strong> Use the payment report form instead — it asks for the details we need.</span>
+        <span className="font-semibold text-coral-600">Payment report →</span>
+      </Link>
       <div className="card mt-6 p-6">
         <ReportForm targetType={target} targetId={sp.get("id")} defaultSeverity={severity} />
       </div>
