@@ -47,7 +47,7 @@ export interface DemoDB {
   outbox: EmailLogEntry[];
 }
 
-export const DEMO_DB_VERSION = 3;
+export const DEMO_DB_VERSION = 4;
 
 const day = 86400000;
 const iso = (offsetDays: number) => new Date(Date.now() + offsetDays * day).toISOString();

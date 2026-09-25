@@ -58,11 +58,10 @@ export const SERVICE_AREAS: ServiceArea[] = [
   { slug: "albany", name: "Albany", cities: ["Albany"], active: true },
   { slug: "el-cerrito", name: "El Cerrito", cities: ["El Cerrito"], active: true },
   { slug: "richmond-kensington", name: "Richmond & Kensington", cities: ["Richmond", "Kensington"], active: true },
-  { slug: "oakland-emeryville", name: "North Oakland & Emeryville", cities: ["Oakland", "Emeryville"], active: true },
   { slug: "remote", name: "Remote (East Bay employers)", cities: ["Remote"], active: true },
 ];
 
-export const CITIES = ["Berkeley", "Albany", "El Cerrito", "Richmond", "Kensington", "Oakland", "Emeryville", "Remote"];
+export const CITIES = ["Berkeley", "Albany", "El Cerrito", "Richmond", "Kensington", "Remote"];
 
 export const NEIGHBORHOODS: Record<string, string[]> = {
   Berkeley: ["North Berkeley", "Elmwood", "Downtown Berkeley", "Thousand Oaks", "West Berkeley", "Claremont", "Southside"],
@@ -70,8 +69,6 @@ export const NEIGHBORHOODS: Record<string, string[]> = {
   "El Cerrito": ["El Cerrito Plaza area", "Del Norte area", "El Cerrito Hills"],
   Richmond: ["Point Richmond", "Richmond Annex", "Marina Bay"],
   Kensington: ["Kensington"],
-  Oakland: ["Rockridge", "Temescal"],
-  Emeryville: ["Emeryville"],
   Remote: [],
 };
 
