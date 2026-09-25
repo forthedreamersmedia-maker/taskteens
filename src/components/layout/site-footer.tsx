@@ -11,7 +11,13 @@ const COLS = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-24 bg-navy-800 text-navy-100">
+    <footer className="relative isolate mt-24 overflow-hidden bg-navy-900 text-navy-100">
+      <picture>
+        <source media="(max-width: 768px)" srcSet="/footer-bridge-sm.jpg" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/footer-bridge.jpg" alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 -z-20 h-full w-full object-cover object-[center_58%]" />
+      </picture>
+      <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-b from-navy-900/80 via-navy-900/45 to-navy-900/75" />
       <div className="container-page grid gap-10 py-14 md:grid-cols-[1.3fr_repeat(4,1fr)]">
         <div>
           <Logo light />
@@ -29,7 +35,7 @@ export function SiteFooter() {
             <ul className="mt-3 space-y-2 text-sm">
               {c.links.map(([label, href]) => (
                 <li key={href}>
-                  <Link href={href} className="text-navy-200 transition hover:text-white">
+                  <Link href={href} className="text-white/80 transition hover:text-white">
                     {label}
                   </Link>
                 </li>
@@ -38,9 +44,9 @@ export function SiteFooter() {
           </nav>
         ))}
       </div>
-      <div className="border-t border-white/10">
+      <div className="border-t border-white/15 bg-navy-900/40 backdrop-blur-sm">
         <div className="container-page flex flex-col gap-2 py-6 text-xs text-navy-300 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} TaskTeens. Early-stage MVP — legal pages are starter drafts pending professional review.</p>
+          <p>© {new Date().getFullYear()} TaskTeens. Bay Area Built.</p>
           <p>
             In an emergency, call <strong className="text-white">911</strong>. For safety concerns, use{" "}
             <Link href="/report" className="text-white underline underline-offset-2">Report a concern</Link>.
