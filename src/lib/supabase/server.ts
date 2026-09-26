@@ -26,7 +26,8 @@ export async function getServerSupabase(): Promise<SupabaseClient> {
  * and only for narrowly-scoped reads (e.g. looking up a recipient's email).
  */
 export function getServiceSupabase(): SupabaseClient | null {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // SUPABASE_SECRET_KEY is what the Vercel ↔ Supabase integration sets automatically.
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || process.env.SUPABASE_SECRET_KEY?.trim();
   if (!key || !SUPABASE_URL) return null;
   return createClient(SUPABASE_URL, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }

@@ -81,7 +81,7 @@ export async function POST(req: Request) {
     if (emp?.email)
       emails.push(sendEmail(employerNewApplicationEmail({ to: emp.email, site: SITE_URL, employerName, jobTitle, applicantFirstName: first, applicationId: app.id })));
   } else {
-    console.warn("SUPABASE_SERVICE_ROLE_KEY missing — employer email skipped (in-app notification still created).");
+    console.warn("SUPABASE_SERVICE_ROLE_KEY / SUPABASE_SECRET_KEY missing — employer email skipped (in-app notification still created).");
   }
   await Promise.allSettled(emails);
 
