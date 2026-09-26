@@ -171,7 +171,7 @@ export default function HomePage() {
               <Link href="/hire" className="btn-outline btn-lg">How hiring works</Link>
             </div>
           </div>
-          <SafeImage src={IMAGES.employer} alt="A small business owner working with a young employee" className="h-64 w-full rounded-3xl lg:h-72" />
+          <SafeImage src="/employer-teens.jpg" alt="Teens working together at a table while an adult hangs a hand-painted Zero Waste poster" className="h-64 w-full rounded-3xl lg:h-80" />
         </div>
       </section>
 

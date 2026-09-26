@@ -10,7 +10,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: { default: "TaskTeens — Making Job Hunting Easier For Teens", template: "%s · TaskTeens" },
   description: "TaskTeens connects East Bay teenagers in Berkeley, Albany and El Cerrito with safe, legitimate work from local families and small businesses.",
-  openGraph: { title: "TaskTeens — Bay Area Built", description: "Making Job Hunting Easier For Teens.", type: "website", images: ["/hero-bay-sm.jpg"] },
+  openGraph: {
+    title: "TaskTeens — Making Job Hunting Easier For Teens",
+    description: "Local jobs, internships and volunteering for teens in Berkeley, Albany and El Cerrito.",
+    type: "website",
+    siteName: "TaskTeens",
+    images: [{ url: "/og-image.jpg?v=2", width: 1200, height: 630, alt: "TaskTeens — Making Job Hunting Easier For Teens" }],
+  },
+  twitter: { card: "summary_large_image", title: "TaskTeens — Making Job Hunting Easier For Teens", description: "Local jobs, internships and volunteering for East Bay teens.", images: ["/og-image.jpg?v=2"] },
   icons: { icon: [{ url: "/favicon.ico?v=2", sizes: "any" }, { url: "/icon.png?v=2", type: "image/png" }], apple: "/apple-icon.png?v=2" },
 };
 
