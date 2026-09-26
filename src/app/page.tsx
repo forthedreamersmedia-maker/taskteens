@@ -25,7 +25,7 @@ export default function HomePage() {
         <picture>
           <source media="(max-width: 768px)" srcSet="/hero-bay-sm.jpg" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/hero-bay.jpg" alt="View of the San Francisco skyline across the Bay from the East Bay hills" className="absolute inset-0 -z-20 h-full w-full object-cover object-[center_35%]" fetchPriority="high" />
+          <img src="/hero-bay.jpg" alt="San Francisco skyline at dusk seen across the Bay from Yerba Buena Island" className="absolute inset-0 -z-20 h-full w-full object-cover object-[center_30%]" fetchPriority="high" />
         </picture>
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-r from-navy-900/85 via-navy-900/50 to-navy-900/10" />
         <div aria-hidden="true" className="absolute inset-x-0 top-0 -z-10 h-32 bg-gradient-to-b from-navy-900/60 to-transparent" />
