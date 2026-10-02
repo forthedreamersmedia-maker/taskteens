@@ -2,7 +2,9 @@
 import { CheckCircle2, Scale, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Captcha, type CaptchaHandle } from "@/components/auth/captcha";
+import { captchaEnabled, isDemoMode } from "@/lib/config";
 import { Field } from "@/components/ui/field";
 import { Alert } from "@/components/ui/feedback";
 import { useAuth } from "@/lib/auth-context";
@@ -36,6 +38,9 @@ function PaymentReport() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captcha = useRef<CaptchaHandle>(null);
+  const needCaptcha = !session && captchaEnabled && !isDemoMode;
 
   // Pre-select the job when linked from the dashboard (?job=...)
   useEffect(() => {
@@ -65,6 +70,7 @@ function PaymentReport() {
     if (!money(f.unpaid)) err.unpaid = "Enter the amount you believe is still owed, e.g. 80.";
     if (!f.guardian) err.guardian = "Let us know whether a parent or guardian knows about this.";
     if (!session && !/^\S+@\S+\.\S+$/.test(f.email)) err.email = "Enter an email so we can follow up with you.";
+    if (needCaptcha && !captchaToken) err._form = "Please complete the security check.";
     if (!f.confirm) err.confirm = "Please confirm the information is accurate to the best of your knowledge.";
     setErrors(err);
     if (Object.values(err).some(Boolean)) return;
@@ -95,11 +101,13 @@ function PaymentReport() {
         details,
         severity: "normal",
         contact_email: session ? session.user.email : f.email,
+        captcha_token: captchaToken,
       });
       setDone(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e2) {
       setErrors({ _form: errorMessage(e2) });
+      captcha.current?.reset();
     } finally {
       setBusy(false);
     }
@@ -197,6 +205,7 @@ function PaymentReport() {
           </label>
           {errors.confirm && <p className="field-error">{errors.confirm}</p>}
         </div>
+        {needCaptcha && <Captcha ref={captcha} action="payment_report" onToken={setCaptchaToken} />}
         {errors._form && <Alert tone="error">{errors._form}</Alert>}
         <button type="submit" disabled={busy} className="btn-coral w-full">{busy ? "Sending…" : "Submit payment report"}</button>
       </form>

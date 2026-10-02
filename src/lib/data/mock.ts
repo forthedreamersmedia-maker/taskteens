@@ -836,7 +836,7 @@ export function createMockClient(): DataClient {
     },
 
     // ----------------------------------------------------------------- safety
-    async createReport(input) {
+    async createReport({ captcha_token: _captcha, ...input }) {
       await wait(300);
       const db = load();
       const s = currentSession();

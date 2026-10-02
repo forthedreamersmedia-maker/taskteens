@@ -1,6 +1,8 @@
 "use client";
 import { Flag } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Captcha, type CaptchaHandle } from "@/components/auth/captcha";
+import { captchaEnabled, isDemoMode } from "@/lib/config";
 import { Modal } from "@/components/ui/modal";
 import { Field } from "@/components/ui/field";
 import { Alert } from "@/components/ui/feedback";
@@ -22,21 +24,26 @@ export function ReportForm({ targetType, targetId, onDone, defaultSeverity = "no
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captcha = useRef<CaptchaHandle>(null);
+  const needCaptcha = !session && captchaEnabled && !isDemoMode;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const input = { target_type: targetType, target_id: targetId, reason, details, severity, contact_email: session ? session.user.email : email || null };
     const parsed = reportSchema.safeParse(input);
     if (!parsed.success) return setErrors(fieldErrors(parsed.error));
+    if (needCaptcha && !captchaToken) return setErrors({ _form: "Please complete the security check." });
     setErrors({});
     setBusy(true);
     try {
-      await data.createReport({ ...parsed.data, contact_email: parsed.data.contact_email || null });
+      await data.createReport({ ...parsed.data, contact_email: parsed.data.contact_email || null, captcha_token: captchaToken });
       setDone(true);
       toast({ tone: "success", title: "Report received", body: "Thank you. Our moderation team will review it." });
       onDone?.();
     } catch (err) {
       setErrors({ _form: errorMessage(err) });
+      captcha.current?.reset();
     } finally {
       setBusy(false);
     }
@@ -86,6 +93,7 @@ export function ReportForm({ targetType, targetId, onDone, defaultSeverity = "no
           <input type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
         </Field>
       )}
+      {needCaptcha && <Captcha ref={captcha} action="report" onToken={setCaptchaToken} />}
       {errors._form && <Alert tone="error">{errors._form}</Alert>}
       <button type="submit" disabled={busy} className="btn-coral w-full">
         {busy ? "Sending…" : "Submit report"}

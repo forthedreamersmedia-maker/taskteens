@@ -4,3 +4,4 @@ node_modules
 .env
 *.tsbuildinfo
 .vercel
+.DS_Store

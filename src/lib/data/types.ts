@@ -89,6 +89,8 @@ export interface ReportInput {
   details: string;
   severity: Report["severity"];
   contact_email: string | null;
+  /** Cloudflare Turnstile token — required for signed-out reports in production. */
+  captcha_token?: string | null;
 }
 
 /**
