@@ -43,7 +43,7 @@ export default function ApplicationDetail() {
   if (loading) return <EmployerShell title="Application"><PageLoader /></EmployerShell>;
   if (!app) return <EmployerShell title="Application"><EmptyState title="Application not found" body="It may belong to a different employer account." action={{ label: "All applicants", href: "/dashboard/employer/applications" }} /></EmployerShell>;
 
-  const withdrawn = app.status === "withdrawn";
+  const withdrawn = ["withdrawn", "parent_declined", "cancelled"].includes(app.status);
   const completed = !!app.completed_at;
   const portfolio = safeUrl(app.portfolio_url);
 
@@ -75,7 +75,7 @@ export default function ApplicationDetail() {
       <Link href={`/dashboard/employer/applications?job=${app.job_id}`} className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-navy-500 hover:text-navy-800">
         <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Applicants for this job
       </Link>
-      {withdrawn && <Alert tone="warn" className="mb-5">The applicant withdrew this application.</Alert>}
+      {withdrawn && <Alert tone="warn" className="mb-5">{app.status === "withdrawn" ? "This application was withdrawn." : app.status === "parent_declined" ? "The teen\u2019s parent declined this job." : "This job was cancelled."}</Alert>}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-6">
@@ -143,6 +143,12 @@ export default function ApplicationDetail() {
             <Alert tone="info" title="Awaiting parent approval">
               The teen&apos;s parent or guardian must approve this job before it&apos;s confirmed. The exact work address is shared with the teen only after approval.
             </Alert>
+          )}
+          {app.status === "confirmed" && !completed && (
+            <div className="card space-y-2 p-5">
+              <Alert tone="success" title="Confirmed by the teen's parent">The teen and their parent can now see the service address and job time.</Alert>
+              <button type="button" disabled={busy} className="btn-outline btn-sm w-full" onClick={() => { if (window.confirm("Cancel this confirmed job? The teen and their parent are notified.")) changeStatus("cancelled"); }}>Cancel this job</button>
+            </div>
           )}
           {app.status === "confirmed" && (
             <div className="card space-y-3 p-5">

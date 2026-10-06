@@ -1,4 +1,5 @@
 "use client";
+import { ConfirmedJobInfo } from "@/components/safety/confirmed-job-info";
 import { CheckCircle2, ChevronDown, FileText, Star } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -98,6 +99,7 @@ export default function TeenApplications() {
                   )}
                   {a.status === "confirmed" && (
                     <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl bg-cream-100 px-3 py-2.5 text-sm">
+                      {!a.completed_at && <ConfirmedJobInfo applicationId={a.id} />}
                       {!a.completed_at ? (
                         <>
                           <span className="text-navy-600">Finished this job?</span>

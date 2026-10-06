@@ -192,6 +192,8 @@ select tests.ok((select version from public.jobs where id = :J1) = 2 and (select
 select tests.ok((select moderation_status from public.jobs where id = :J1) = 'pending', 'material change sends listing back to moderation');
 select tests.login(:T1);
 select tests.ok(tests.count($$select * from public.get_job_address('00000000-0000-4000-8000-000000002001')$$) = 0, 'address hidden again until re-approval');
+select tests.logout();
+update public.jobs set moderation_status = 'approved' where id = :J1;
 select tests.login(:P1);
 select public.parent_decide_application('00000000-0000-4000-8000-000000002001', true, 'Approved new pay');
 select tests.ok((select job_version from public.parent_job_approvals where status = 'active' and application_id = '00000000-0000-4000-8000-000000002001') = 2, 'approval re-recorded against version 2');
