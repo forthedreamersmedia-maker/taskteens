@@ -20,8 +20,6 @@ export const applicationSchema = z
     applicant_name: z.string().trim().min(2, "Enter your first and last name.").max(80),
     age_range: z.enum(["14-15", "16-17", "18-19"], { errorMap: () => ({ message: "Choose your age range." }) }),
     city: z.string().trim().min(2, "Enter the city you live in (no street address)."),
-    applicant_email: z.string().trim().email("Enter a valid email address."),
-    applicant_phone: z.string().trim().regex(phoneRegex, "Enter a valid phone number, e.g. (510) 555-0123."),
     experience: noSensitive("your experience").pipe(z.string().trim().min(10, "Tell the employer a little about your experience (at least 10 characters). School, clubs and volunteering count!").max(1500)),
     skills: z.array(z.string()).min(1, "Add at least one skill."),
     availability: z.string().trim().min(3, "Tell the employer when you're available.").max(500),

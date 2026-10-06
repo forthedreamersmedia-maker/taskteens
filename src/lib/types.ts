@@ -1,7 +1,7 @@
 // Domain types shared by the UI, the demo (mock) data layer and the Supabase data layer.
 // Column names mirror supabase/migrations/0001_schema.sql (snake_case).
 
-export type Role = "teen" | "employer" | "admin";
+export type Role = "teen" | "parent" | "employer" | "admin";
 export type AccountStatus = "active" | "suspended";
 
 export type JobStatus = "draft" | "published" | "paused" | "closed" | "removed";
@@ -17,9 +17,12 @@ export type ApplicationStatus =
   | "submitted"
   | "viewed"
   | "interview_requested"
-  | "selected"
+  | "selected" // employer chose this teen — awaiting parent/guardian approval
+  | "confirmed" // parent/guardian approved this specific job
+  | "parent_declined"
   | "not_selected"
-  | "withdrawn";
+  | "withdrawn"
+  | "cancelled";
 
 export type VerificationStatus = "unverified" | "pending" | "verified" | "rejected";
 export type EmployerType = "individual" | "business";
@@ -124,8 +127,9 @@ export interface Application {
   teen_id: string;
   status: ApplicationStatus;
   applicant_name: string;
-  applicant_email: string;
-  applicant_phone: string;
+  /** No longer collected — teens and employers talk through moderated TaskTeens messages. */
+  applicant_email: string | null;
+  applicant_phone: string | null;
   age_range: AgeRange;
   city: string;
   experience: string;
@@ -390,8 +394,6 @@ export interface ApplicationInput {
   applicant_name: string;
   age_range: AgeRange;
   city: string;
-  applicant_email: string;
-  applicant_phone: string;
   experience: string;
   skills: string[];
   availability: string;

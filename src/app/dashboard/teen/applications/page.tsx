@@ -16,11 +16,17 @@ import { APPLICATION_STATUS_LABEL, TRANSPORTATION_LABEL } from "@/lib/constants"
 import type { ApplicationStatus, ApplicationWithJob } from "@/lib/types";
 import { categoryName, cn, errorMessage, formatDate, formatPay, timeAgo } from "@/lib/utils";
 
-const FLOW: ApplicationStatus[] = ["submitted", "viewed", "interview_requested", "selected"];
+const CLOSED: ApplicationStatus[] = ["withdrawn", "not_selected", "parent_declined", "cancelled"];
+const FLOW: ApplicationStatus[] = ["submitted", "viewed", "interview_requested", "selected", "confirmed"];
 
 function Progress({ status }: { status: ApplicationStatus }) {
-  if (status === "withdrawn" || status === "not_selected")
-    return <p className="text-xs text-navy-400">{status === "withdrawn" ? "You withdrew this application." : "The employer chose another applicant. Keep going — the next one could be yours."}</p>;
+  const closed: Partial<Record<ApplicationStatus, string>> = {
+    withdrawn: "This application was withdrawn.",
+    not_selected: "The employer chose another applicant. Keep going — the next one could be yours.",
+    parent_declined: "Your parent or guardian declined this job.",
+    cancelled: "This job was cancelled.",
+  };
+  if (closed[status]) return <p className="text-xs text-navy-400">{closed[status]}</p>;
   const idx = FLOW.indexOf(status);
   return (
     <ol className="flex items-center gap-1" aria-label="Application progress">
@@ -52,7 +58,7 @@ export default function TeenApplications() {
   }, [doneIds]);
   useEffect(() => data.subscribeNotifications(() => reload(true)), [data, reload]);
 
-  const list = (apps ?? []).filter((a) => filter === "all" || (filter === "active" ? !["withdrawn", "not_selected"].includes(a.status) : ["withdrawn", "not_selected"].includes(a.status)));
+  const list = (apps ?? []).filter((a) => filter === "all" || (filter === "active" ? !CLOSED.includes(a.status) : CLOSED.includes(a.status)));
 
   return (
     <TeenShell title="My applications" subtitle="Status updates appear here automatically.">
@@ -86,6 +92,11 @@ export default function TeenApplications() {
                   <div className="mt-3"><Progress status={a.status} /></div>
                   <p className="mt-2 text-xs text-navy-400">Applied {formatDate(a.created_at)} · last update {timeAgo(a.status_updated_at)}</p>
                   {a.status === "selected" && (
+                    <p className="mt-3 rounded-2xl bg-cream-100 px-3 py-2.5 text-sm text-navy-600">
+                      You were selected! Your parent or guardian needs to approve this job before it&apos;s confirmed. The exact address appears here after they approve.
+                    </p>
+                  )}
+                  {a.status === "confirmed" && (
                     <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl bg-cream-100 px-3 py-2.5 text-sm">
                       {!a.completed_at ? (
                         <>
@@ -117,12 +128,12 @@ export default function TeenApplications() {
                   <div><dt className="text-xs text-navy-400">Skills</dt><dd>{a.skills.join(", ")}</dd></div>
                   <div><dt className="text-xs text-navy-400">Résumé</dt><dd>{a.resume_name ?? "None attached"}</dd></div>
                 </dl>
-                {a.status === "selected" && a.job.opportunity_type !== "volunteer" && (
+                {a.status === "confirmed" && a.job.opportunity_type !== "volunteer" && (
                   <p className="mt-4 text-sm text-navy-600">
                     Problem getting paid for this job? <Link href={`/report/payment?job=${a.job_id}`} className="link">Report a payment issue</Link>
                   </p>
                 )}
-                {!["withdrawn", "not_selected", "selected"].includes(a.status) && (
+                {!["withdrawn", "not_selected", "parent_declined", "cancelled"].includes(a.status) && !a.completed_at && (
                   <button type="button" onClick={() => setWithdrawing(a)} className="btn-danger btn-sm mt-4">Withdraw application</button>
                 )}
               </details>

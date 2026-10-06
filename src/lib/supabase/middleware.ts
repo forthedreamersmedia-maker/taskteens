@@ -6,6 +6,7 @@ const ROLE_PREFIX: { prefix: string; roles: string[] }[] = [
   { prefix: "/admin", roles: ["admin"] },
   { prefix: "/dashboard/teen", roles: ["teen"] },
   { prefix: "/dashboard/employer", roles: ["employer"] },
+  { prefix: "/dashboard/parent", roles: ["parent"] },
   { prefix: "/onboarding/employer", roles: ["employer"] },
 ];
 
@@ -25,7 +26,7 @@ export async function updateSession(request: NextRequest) {
 
   const { data } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
-  const rule = ROLE_PREFIX.find((r) => path.startsWith(r.prefix)) ?? (path.startsWith("/dashboard") ? { prefix: "/dashboard", roles: ["teen", "employer", "admin"] } : null);
+  const rule = ROLE_PREFIX.find((r) => path.startsWith(r.prefix)) ?? (path.startsWith("/dashboard") ? { prefix: "/dashboard", roles: ["teen", "parent", "employer", "admin"] } : null);
   if (!rule) return response;
 
   if (!data.user) {
@@ -42,6 +43,17 @@ export async function updateSession(request: NextRequest) {
     url.search = "";
     if (path === "/dashboard") return response;
     return NextResponse.redirect(url);
+  }
+  // Administrators need a second factor (aal2) — the database enforces the same rule for admin data.
+  if (row.role === "admin" && path.startsWith("/admin")) {
+    const { data: pending } = await supabase.rpc("is_admin_pending_mfa");
+    if (pending) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/auth/mfa";
+      url.search = "";
+      url.searchParams.set("next", path);
+      return NextResponse.redirect(url);
+    }
   }
   return response;
 }

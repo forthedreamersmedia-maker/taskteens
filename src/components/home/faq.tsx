@@ -10,8 +10,8 @@ export const FAQS = [
     a: "Teens never pay to create an account or apply. This early version of TaskTeens has no payments or fees built in; any future employer pricing would be announced before it takes effect.",
   },
   {
-    q: "Are employers background-checked?",
-    a: "No. TaskTeens does not currently run background checks. Employers can request a profile review, where an administrator checks the information they submitted. A “Verified profile” badge appears only after that review is approved — it is not a background check or a legal guarantee. Always follow our safety guidelines.",
+    q: "Does TaskTeens run background checks on employers?",
+    a: "No. TaskTeens does not run background checks. Employer profiles show separate indicators — email confirmed, phone confirmed, address reviewed and manually reviewed — so you can see exactly which steps were completed. None of these is a background check or a guarantee. A parent or guardian approves every job before it is confirmed, and you should always follow our safety guidelines.",
   },
   {
     q: "Do I need a work permit?",

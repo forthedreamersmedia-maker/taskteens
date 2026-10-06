@@ -31,8 +31,6 @@ export function ApplyForm({ jobId }: { jobId: string }) {
     applicant_name: "",
     age_range: "" as AgeRange | "",
     city: "",
-    applicant_email: "",
-    applicant_phone: "",
     experience: "",
     skills: [] as string[],
     availability: "",
@@ -63,8 +61,6 @@ export function ApplyForm({ jobId }: { jobId: string }) {
     setForm((f) => ({
       ...f,
       applicant_name: f.applicant_name || session.user.full_name,
-      applicant_email: f.applicant_email || session.user.email,
-      applicant_phone: f.applicant_phone || session.user.phone || "",
       age_range: f.age_range || p?.age_range || "",
       city: f.city || p?.city || "",
       experience: f.experience || p?.experience || "",
@@ -186,12 +182,6 @@ export function ApplyForm({ jobId }: { jobId: string }) {
               <input id="fld-city" className="input" list="city-list" value={form.city} onChange={(e) => set("city", e.target.value)} autoComplete="address-level2" />
             </Field>
             <datalist id="city-list">{CITIES.filter((c) => c !== "Remote").map((c) => <option key={c} value={c} />)}</datalist>
-            <Field label="Email" required error={errors.applicant_email} hint="The employer will use this to contact you.">
-              <input id="fld-applicant_email" type="email" className="input" value={form.applicant_email} onChange={(e) => set("applicant_email", e.target.value)} autoComplete="email" />
-            </Field>
-            <Field label="Phone number" required error={errors.applicant_phone} hint="Shared only with this employer.">
-              <input id="fld-applicant_phone" type="tel" className="input" value={form.applicant_phone} onChange={(e) => set("applicant_phone", e.target.value)} autoComplete="tel" placeholder="(510) 555-0123" />
-            </Field>
           </div>
           {tooYoung && <Alert tone="warn">This job lists a minimum age of {job.min_age}. You can still apply, but the employer may not be able to hire you yet.</Alert>}
         </section>
@@ -283,7 +273,7 @@ export function ApplyForm({ jobId }: { jobId: string }) {
   );
 }
 
-function Confirmation({ app, jobTitle, employer }: { app: Application; jobTitle: string; employer: string }) {
+function Confirmation({ jobTitle, employer }: { app: Application; jobTitle: string; employer: string }) {
   const ref = useRef<HTMLHeadingElement>(null);
   useEffect(() => ref.current?.focus(), []);
   return (
@@ -296,7 +286,7 @@ function Confirmation({ app, jobTitle, employer }: { app: Application; jobTitle:
         <p className="mt-2 text-navy-600">Your application for <strong>{jobTitle}</strong> is now in <strong>{employer}</strong>&apos;s dashboard.</p>
         <ul className="mx-auto mt-6 max-w-sm space-y-2 text-left text-sm text-navy-600">
           <li className="flex gap-2"><CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" aria-hidden="true" /> The employer was notified by email.</li>
-          <li className="flex gap-2"><Mail className="h-5 w-5 shrink-0 text-emerald-500" aria-hidden="true" /> A confirmation was sent to {app.applicant_email}.</li>
+          <li className="flex gap-2"><Mail className="h-5 w-5 shrink-0 text-emerald-500" aria-hidden="true" /> Your parent or guardian can see this application, and must approve before any work begins.</li>
           <li className="flex gap-2"><CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" aria-hidden="true" /> You&apos;ll get a notification each time your status changes.</li>
         </ul>
         <div className="mt-8 flex flex-wrap justify-center gap-3">

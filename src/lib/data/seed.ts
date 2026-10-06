@@ -357,21 +357,21 @@ export function buildSeed(): DemoDB {
   const applications: Application[] = [
     {
       ...baseApp, id: "app_jordan_dog", job_id: "job_dog_walker_solano", employer_id: "u_emp_solano", teen_id: "u_teen_jordan", status: "submitted",
-      applicant_name: "Jordan Lee", applicant_email: "jordan@demo.taskteens.com", applicant_phone: "(510) 555-0177", age_range: "16-17", city: "Berkeley",
+      applicant_name: "Jordan Lee", applicant_email: null, applicant_phone: null, age_range: "16-17", city: "Berkeley",
       experience: "Walked my neighbor's two labs every day last summer.", skills: ["Reliable", "Comfortable with dogs"], availability: "Mon, Wed, Fri after 3:15 pm",
       transportation: "transit_accessible", interest_statement: "I love dogs and I'm looking for a steady after-school job close to school. I'm always on time.",
       status_updated_at: iso(-1), created_at: iso(-1),
     },
     {
       ...baseApp, id: "app_aisha_petsit", job_id: "job_pet_sitter_weekend", employer_id: "u_emp_solano", teen_id: "u_teen_aisha", status: "viewed",
-      applicant_name: "Aisha Patel", applicant_email: "aisha@demo.taskteens.com", applicant_phone: "(510) 555-0190", age_range: "14-15", city: "El Cerrito",
+      applicant_name: "Aisha Patel", applicant_email: null, applicant_phone: null, age_range: "14-15", city: "El Cerrito",
       experience: "Take care of our family cat and my aunt's rabbits when she travels.", skills: ["Responsible", "Cat experience"], availability: "Weekend mornings",
       transportation: "bike_or_walk", interest_statement: "I'm careful and responsible with animals and would love to start building work experience on weekends.",
       work_permit_status: "not_sure", viewed_at: iso(-2), status_updated_at: iso(-2), created_at: iso(-4),
     },
     {
       ...baseApp, id: "app_maya_books", job_id: "job_bookstore_clerk", employer_id: "u_emp_plaza", teen_id: "u_teen_maya", status: "interview_requested",
-      applicant_name: "Maya Rodriguez", applicant_email: "teen@demo.taskteens.com", applicant_phone: "(510) 555-0142", age_range: "16-17", city: "Albany",
+      applicant_name: "Maya Rodriguez", applicant_email: null, applicant_phone: null, age_range: "16-17", city: "Albany",
       experience: "Library summer reading volunteer; organized our school book swap.", skills: ["Friendly", "Organized", "Loves reading"],
       availability: "Saturdays, plus Wednesday afternoons", transportation: "transit_accessible",
       interest_statement: "Plaza Corner Books is one of my favorite places. I'd love to help other people find books they'll love.",
@@ -379,7 +379,7 @@ export function buildSeed(): DemoDB {
     },
     {
       ...baseApp, id: "app_maya_cafe", job_id: "job_barista_weekend", employer_id: "u_emp_gilman", teen_id: "u_teen_maya", status: "submitted",
-      applicant_name: "Maya Rodriguez", applicant_email: "teen@demo.taskteens.com", applicant_phone: "(510) 555-0142", age_range: "16-17", city: "Albany",
+      applicant_name: "Maya Rodriguez", applicant_email: null, applicant_phone: null, age_range: "16-17", city: "Albany",
       experience: "Helped run the snack table at school events.", skills: ["Friendly", "Customer service"], availability: "Sat & Sun mornings",
       transportation: "transit_accessible", interest_statement: "I want to learn how a real café runs and I'm great with people during busy rushes.",
       work_permit_status: "in_progress", status_updated_at: iso(0), created_at: iso(0),
@@ -409,8 +409,8 @@ export function buildSeed(): DemoDB {
   for (const p of past) {
     const t = PAST_TEENS.find((x) => x.id === p.teen)!;
     applications.push({
-      ...baseApp, id: p.id, job_id: p.job, employer_id: p.emp, teen_id: p.teen, status: "selected",
-      applicant_name: t.name, applicant_email: t.email, applicant_phone: "(510) 555-0100", age_range: "16-17", city: t.city,
+      ...baseApp, id: p.id, job_id: p.job, employer_id: p.emp, teen_id: p.teen, status: "confirmed",
+      applicant_name: t.name, applicant_email: null, applicant_phone: null, age_range: "16-17", city: t.city,
       experience: "Demo past worker.", skills: ["Reliable"], availability: "Weekends", transportation: "bike_or_walk",
       interest_statement: "Demonstration application used to show completed-job history.",
       viewed_at: iso(-p.daysAgo - 5), status_updated_at: iso(-p.daysAgo - 4), created_at: iso(-p.daysAgo - 7),
@@ -420,15 +420,15 @@ export function buildSeed(): DemoDB {
   // Maya (demo teen): one finished job ready to rate, one selected job still in progress.
   applications.push(
     {
-      ...baseApp, id: "app_maya_yard", job_id: "job_yard_cleanup", employer_id: "u_emp_rivera", teen_id: "u_teen_maya", status: "selected",
-      applicant_name: "Maya Rodriguez", applicant_email: "teen@demo.taskteens.com", applicant_phone: "(510) 555-0142", age_range: "16-17", city: "Albany",
+      ...baseApp, id: "app_maya_yard", job_id: "job_yard_cleanup", employer_id: "u_emp_rivera", teen_id: "u_teen_maya", status: "confirmed",
+      applicant_name: "Maya Rodriguez", applicant_email: null, applicant_phone: null, age_range: "16-17", city: "Albany",
       experience: "Help with our family garden every fall.", skills: ["Hard-working", "Outdoors"], availability: "Saturday", transportation: "transit_accessible",
       interest_statement: "I'm happy to work outside and I'm free that weekend.", work_permit_status: "in_progress",
       viewed_at: iso(-9), status_updated_at: iso(-8), created_at: iso(-10), completed_at: iso(-2), completed_by: "employer",
     },
     {
-      ...baseApp, id: "app_maya_event", job_id: "job_event_setup", employer_id: "u_emp_bayside", teen_id: "u_teen_maya", status: "selected",
-      applicant_name: "Maya Rodriguez", applicant_email: "teen@demo.taskteens.com", applicant_phone: "(510) 555-0142", age_range: "16-17", city: "Albany",
+      ...baseApp, id: "app_maya_event", job_id: "job_event_setup", employer_id: "u_emp_bayside", teen_id: "u_teen_maya", status: "confirmed",
+      applicant_name: "Maya Rodriguez", applicant_email: null, applicant_phone: null, age_range: "16-17", city: "Albany",
       experience: "Set up and cleaned up for our school's spring fair.", skills: ["Teamwork", "Early riser"], availability: "Saturday mornings", transportation: "transit_accessible",
       interest_statement: "I like busy mornings and helping events run smoothly.", work_permit_status: "in_progress",
       viewed_at: iso(-5), status_updated_at: iso(-4), created_at: iso(-6),
