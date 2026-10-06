@@ -95,8 +95,11 @@ export function createSupabaseClient(): DataClient {
     // ------------------------------------------------------------------ auth
     getSession: loadSession,
     onAuthChange(cb) {
-      const { data } = sb.auth.onAuthStateChange(() => {
-        loadSession().then(cb);
+      // Token refreshes don't change who is signed in, so they don't need a reload. Other events are
+      // handled outside the auth callback: calling auth methods inside it can re-trigger refreshes in a loop.
+      const { data } = sb.auth.onAuthStateChange((event) => {
+        if (event === "TOKEN_REFRESHED") return;
+        setTimeout(() => { loadSession().then(cb).catch(() => cb(null)); }, 0);
       });
       return () => data.subscription.unsubscribe();
     },
@@ -142,8 +145,12 @@ export function createSupabaseClient(): DataClient {
       }
     },
     async updatePassword(password) {
-      const { error } = await sb.auth.updateUser({ password });
-      if (error) fail(error);
+      // Done on the server with the cookie session set by the reset link, so a stale browser tab can't interfere.
+      const res = await fetch("/api/auth/update-password", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password }) });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new DataError(res.status === 401 ? "unauthenticated" : "invalid", body.error ?? "Couldn't update your password. Request a new reset link and try again.");
+      }
     },
     async resendVerification(email) {
       const { error } = await sb.auth.resend({ type: "signup", email });
