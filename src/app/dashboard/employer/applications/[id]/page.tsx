@@ -144,15 +144,12 @@ export default function ApplicationDetail() {
               The teen&apos;s parent or guardian must approve this job before it&apos;s confirmed. The exact work address is shared with the teen only after approval.
             </Alert>
           )}
-<<<<<<< HEAD
           {app.status === "confirmed" && !completed && (
             <div className="card space-y-2 p-5">
               <Alert tone="success" title="Confirmed by the teen's parent">The teen and their parent can now see the service address and job time.</Alert>
               <button type="button" disabled={busy} className="btn-outline btn-sm w-full" onClick={() => { if (window.confirm("Cancel this confirmed job? The teen and their parent are notified.")) changeStatus("cancelled"); }}>Cancel this job</button>
             </div>
           )}
-=======
->>>>>>> 3e1cd4106bc8ed94a84e04cc9b624fcfd5c621d7
           {app.status === "confirmed" && (
             <div className="card space-y-3 p-5">
               <h2 className="flex items-center gap-2 font-bold"><ClipboardCheck className="h-4 w-4 text-navy-400" aria-hidden="true" /> Job completion</h2>

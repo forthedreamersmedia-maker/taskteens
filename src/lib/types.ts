@@ -441,11 +441,8 @@ export interface SignUpInput {
   captchaToken?: string | null;
   /** Same-site path to return to after the email confirmation link. */
   next?: string | null;
-<<<<<<< HEAD
   /** Teen sign-up: parent/guardian contact. The invitation is emailed once the teen confirms their email. */
   parent?: { name: string; email: string; phone: string | null } | null;
-=======
->>>>>>> 3e1cd4106bc8ed94a84e04cc9b624fcfd5c621d7
 }
 
 export interface EmployerOnboardingInput {

@@ -1,10 +1,6 @@
 "use client";
 import { CheckCircle2, Clock, PauseCircle, ShieldAlert, UserPlus } from "lucide-react";
-<<<<<<< HEAD
 import { useEffect, useRef, useState } from "react";
-=======
-import { useState } from "react";
->>>>>>> 3e1cd4106bc8ed94a84e04cc9b624fcfd5c621d7
 import { Field } from "@/components/ui/field";
 import { Alert } from "@/components/ui/feedback";
 import { useAuth } from "@/lib/auth-context";
@@ -34,7 +30,6 @@ export function ParentLinkCard({ compact = false }: { compact?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: "success" | "error" | "warn"; text: string } | null>(null);
   const [showForm, setShowForm] = useState(false);
-<<<<<<< HEAD
   const [phone, setPhone] = useState("");
   // First visit after sign-up: send the invitation from the details given at sign-up (server checks it hasn't been sent).
   const autoTried = useRef(false);
@@ -46,8 +41,6 @@ export function ParentLinkCard({ compact = false }: { compact?: boolean }) {
       .then((j) => { if (j.email && j.email !== "not_needed") q.reload(); })
       .catch(() => undefined);
   }, [q]);
-=======
->>>>>>> 3e1cd4106bc8ed94a84e04cc9b624fcfd5c621d7
 
   if (isDemoMode) {
     return (
@@ -68,11 +61,7 @@ export function ParentLinkCard({ compact = false }: { compact?: boolean }) {
     setBusy(true);
     setMsg(null);
     try {
-<<<<<<< HEAD
       const r = await fetch("/api/parent-invitations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ parent_name: name, parent_email: email, parent_phone: phone || null }) });
-=======
-      const r = await fetch("/api/parent-invitations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ parent_name: name, parent_email: email }) });
->>>>>>> 3e1cd4106bc8ed94a84e04cc9b624fcfd5c621d7
       const j = await r.json();
       if (!r.ok) throw new Error(j.error ?? "Couldn't send the invitation.");
       if (j.email === "sent") setMsg({ tone: "success", text: `Invitation emailed to ${email}. Ask them to check their inbox (and spam folder).` });
@@ -113,10 +102,7 @@ export function ParentLinkCard({ compact = false }: { compact?: boolean }) {
         <form onSubmit={send} noValidate className="grid gap-3 sm:grid-cols-2">
           <Field label="Parent or guardian's name" required><input className="input" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" maxLength={80} /></Field>
           <Field label="Their email" required hint="Must be their own email, not yours."><input type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="off" /></Field>
-<<<<<<< HEAD
           <Field label="Their phone" optional hint="Private — for safety alerts only."><input type="tel" className="input" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="off" placeholder="(510) 555-0123" /></Field>
-=======
->>>>>>> 3e1cd4106bc8ed94a84e04cc9b624fcfd5c621d7
           <div className="flex gap-2 sm:col-span-2">
             <button type="submit" disabled={busy} className="btn-primary btn-sm">{busy ? "Sending…" : "Send invitation"}</button>
             <button type="button" className="btn-ghost btn-sm" onClick={() => setShowForm(false)}>Cancel</button>

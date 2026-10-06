@@ -4,11 +4,7 @@ set client_min_messages = notice;
 select tests.logout();
 
 insert into auth.users (id, email, email_confirmed_at, raw_user_meta_data) values
-<<<<<<< HEAD
  ('00000000-0000-4000-8000-0000000002a1','kid@test.local', now(), '{"full_name":"Kid Kim","role":"teen","parent_name":"Mom Kim","parent_email":"Mom@Test.local","parent_phone":"+15105550111"}'),
-=======
- ('00000000-0000-4000-8000-0000000002a1','kid@test.local', now(), '{"full_name":"Kid Kim","role":"teen"}'),
->>>>>>> 3e1cd4106bc8ed94a84e04cc9b624fcfd5c621d7
  ('00000000-0000-4000-8000-0000000002b1','mom@test.local', now(), '{"full_name":"Mom Kim","role":"parent"}'),
  ('00000000-0000-4000-8000-0000000002b2','stranger@test.local', now(), '{"full_name":"Stranger","role":"parent"}'),
  ('00000000-0000-4000-8000-0000000002b3','unconfirmed@test.local', null, '{"full_name":"Unconfirmed","role":"parent"}');
@@ -18,7 +14,6 @@ insert into auth.users (id, email, email_confirmed_at, raw_user_meta_data) value
 \set STR '''00000000-0000-4000-8000-0000000002b2'''
 \set UNC '''00000000-0000-4000-8000-0000000002b3'''
 
-<<<<<<< HEAD
 select tests.ok((select parent_email = 'mom@test.local' and parent_phone = '+15105550111' from public.teen_profiles where user_id = :KID), 'teen sign-up stores parent name, email and phone privately');
 select tests.login(:KID);
 select tests.throws($$select public.create_parent_invitation(auth.uid(), 'Mom', 'mom@test.local', null, 'h1')$$, 'teen cannot call invitation function directly', 'permission denied');
@@ -31,19 +26,6 @@ select public.create_parent_invitation(:KID, 'Mom Kim', 'Mom@Test.local', '+1510
 select public.create_parent_invitation(:KID, 'Mom Kim', 'mom@test.local', '+15105550111', 'hash-2');
 select public.create_parent_invitation(:KID, 'Mom Kim', 'mom@test.local', '+15105550111', 'hash-3');
 select tests.throws($$select public.create_parent_invitation('00000000-0000-4000-8000-0000000002a1', 'Mom Kim', 'mom@test.local', '+15105550111', 'hash-4')$$, 'invitations are rate limited (3/day)', 'up to 3');
-=======
-select tests.login(:KID);
-select tests.throws($$select public.create_parent_invitation(auth.uid(), 'Mom', 'mom@test.local', 'h1')$$, 'teen cannot call invitation function directly', 'permission denied');
-select tests.ok(public.teen_parent_status(auth.uid()) = 'none', 'new teen starts with no parent');
-
-select tests.as_service();
-select tests.throws($$select public.create_parent_invitation('00000000-0000-4000-8000-0000000002a1', 'Me', 'kid@test.local', 'h0')$$, 'teen cannot invite their own email', 'own email');
-select tests.throws($$select public.create_parent_invitation('00000000-0000-4000-8000-0000000002a1', 'Teacher', 'teen1@test.local', 'h0')$$, 'cannot invite another teen account as parent', 'non-parent');
-select public.create_parent_invitation(:KID, 'Mom Kim', 'Mom@Test.local', 'hash-1');
-select public.create_parent_invitation(:KID, 'Mom Kim', 'mom@test.local', 'hash-2');
-select public.create_parent_invitation(:KID, 'Mom Kim', 'mom@test.local', 'hash-3');
-select tests.throws($$select public.create_parent_invitation('00000000-0000-4000-8000-0000000002a1', 'Mom Kim', 'mom@test.local', 'hash-4')$$, 'invitations are rate limited (3/day)', 'up to 3');
->>>>>>> 3e1cd4106bc8ed94a84e04cc9b624fcfd5c621d7
 select tests.ok((select status from public.parent_invitations where token_hash = 'hash-1') = 'revoked', 'a new invitation replaces the previous pending one');
 select tests.ok((select teen_first_name from public.parent_invitation_preview('hash-3')) = 'Kid', 'invitation preview shows teen first name only');
 
@@ -59,10 +41,7 @@ select tests.throws($$select public.accept_parent_invitation('hash-3', '00000000
 select tests.throws($$select public.accept_parent_invitation('hash-3', '00000000-0000-4000-8000-0000000002a1', 'v1', '["a"]', '1.1.1.1', 'ua', false)$$, 'teen account cannot accept its own invitation', 'parent/guardian account');
 update public.users set email = 'unconfirmed@test.local' where id = :UNC;
 select public.accept_parent_invitation('hash-3', :MOM, '2026-10-pilot-v1', '["parent_or_guardian","approve_each_job"]', '203.0.113.9', 'Mozilla/5.0', true);
-<<<<<<< HEAD
 select tests.ok((select phone_e164 = '+15105550111' and phone_confirmed_at is null from public.parent_profiles where user_id = :MOM), 'parent phone from teen sign-up is stored unconfirmed');
-=======
->>>>>>> 3e1cd4106bc8ed94a84e04cc9b624fcfd5c621d7
 select tests.ok((select ip_address = '203.0.113.9' and consent_version = '2026-10-pilot-v1' from public.parent_consents where parent_id = :MOM), 'consent records version, IP and parent');
 select tests.throws($$select public.accept_parent_invitation('hash-3', '00000000-0000-4000-8000-0000000002b1', 'v1', '["a"]', '1', 'ua', false)$$, 'invitation cannot be reused', 'already used');
 select tests.logout();
