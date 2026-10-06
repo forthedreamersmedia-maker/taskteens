@@ -68,3 +68,15 @@ export function safetyReportEmail(p: { to: string; site: string; severity: strin
   const text = `Report ${p.reportId}\nSeverity: ${p.severity}\nReason: ${p.reason}\n\n${p.details}\n\nReview: ${p.site}/admin/reports`;
   return { to: p.to, subject, text, html: `<pre style="font-family:inherit;white-space:pre-wrap">${esc(text)}</pre>` };
 }
+
+export function parentInvitationEmail(p: { to: string; site: string; parentName: string; teenFirstName: string; url: string; expires: string }): EmailMessage {
+  const subject = `${p.teenFirstName} invited you to confirm their TaskTeens account`;
+  const text = `Hi ${p.parentName},\n\n${p.teenFirstName} signed up for ${SITE_NAME}, a local pilot that connects teens with household jobs in Berkeley, Albany, El Cerrito and nearby. They listed you as their parent or guardian.\n\nIf you are ${p.teenFirstName}'s parent or guardian, open this link to create your own parent account, review what TaskTeens does and doesn't do, and decide whether to give consent:\n${p.url}\n\nThe link expires ${p.expires}. As a parent you approve every job before it is confirmed, can read all messages, and can pause the account at any time.\n\nIf you don't know ${p.teenFirstName}, ignore this email — nothing happens without your consent.\n\n— ${SITE_NAME}`;
+  const html = wrap(
+    `${esc(p.teenFirstName)} invited you to TaskTeens`,
+    `<p>Hi ${esc(p.parentName)},</p><p><strong>${esc(p.teenFirstName)}</strong> signed up for TaskTeens, a local pilot connecting teens with household jobs, and listed you as their parent or guardian.</p><p>Open the link to create your own parent account, review what TaskTeens does and doesn't do, and decide whether to give consent. As a parent you approve every job before it's confirmed, can read all messages, and can pause the account at any time.</p><p style="color:#64748B;font-size:13px">The link expires ${esc(p.expires)}. If you don't know ${esc(p.teenFirstName)}, ignore this email — nothing happens without your consent.</p>`,
+    p.url,
+    "Review and respond",
+  ).replace("{SITE}", p.site);
+  return { to: p.to, subject, text, html };
+}

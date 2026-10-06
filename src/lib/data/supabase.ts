@@ -104,10 +104,10 @@ export function createSupabaseClient(): DataClient {
       const { data, error } = await sb.auth.signUp({
         email: input.email,
         password: input.password,
-        // role is read by the handle_new_user trigger, which only accepts teen|employer
+        // role is read by the handle_new_user trigger, which only accepts teen|parent|employer
         options: {
           data: { full_name: input.full_name, role: input.role },
-          emailRedirectTo: `${SITE_URL}/auth/callback?next=/dashboard`,
+          emailRedirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(input.next && input.next.startsWith("/") && !input.next.startsWith("//") ? input.next : "/dashboard")}`,
           captchaToken: input.captchaToken ?? undefined,
         },
       });

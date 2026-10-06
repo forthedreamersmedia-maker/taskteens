@@ -57,6 +57,8 @@ export interface TeenProfile {
   work_permit_status: WorkPermitStatus | null;
   guardian_consent_status: GuardianConsentStatus | null;
   email_notifications: boolean;
+  /** Private. Never shown to employers. */
+  birth_date?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -177,7 +179,10 @@ export type NotificationKind =
   | "interview_response"
   | "verification_update"
   | "listing_moderation"
-  | "system";
+  | "system"
+  | "parent_invitation" | "parent_confirmed" | "parent_approval" | "message" | "contact_flag" | "job_reminder" | "checkin"
+  | "missed_checkin" | "job_completed" | "incident" | "incident_response" | "restriction" | "emergency" | "emergency_resolved"
+  | "consent_revoked" | "safety_alert";
 
 export interface Notification {
   id: string;
@@ -418,6 +423,8 @@ export interface SignUpInput {
   role: Exclude<Role, "admin">;
   /** Cloudflare Turnstile token, verified by Supabase Auth when CAPTCHA protection is on. */
   captchaToken?: string | null;
+  /** Same-site path to return to after the email confirmation link. */
+  next?: string | null;
 }
 
 export interface EmployerOnboardingInput {

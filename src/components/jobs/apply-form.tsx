@@ -13,6 +13,8 @@ import type { Application, ApplicationInput, GuardianConsentStatus, Transportati
 import { applicationSchema, fieldErrors } from "@/lib/validation";
 import { errorMessage, formatDate } from "@/lib/utils";
 import { DataError } from "@/lib/data";
+import { ParentLinkCard } from "@/components/safety/parent-link-card";
+import { safetySupabase } from "@/lib/safety/client";
 
 const MAX_RESUME = 5 * 1024 * 1024;
 const RESUME_TYPES = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
@@ -21,8 +23,13 @@ export function ApplyForm({ jobId }: { jobId: string }) {
   const { data, session } = useAuth();
   const { data: bundle, loading } = useAsync(
     async () => {
-      const [job, profile, existing, settings] = await Promise.all([data.getJob(jobId), data.getTeenProfile(), data.getMyApplicationForJob(jobId), data.getSettings()]);
-      return { job, profile, existing, settings };
+      const sb = safetySupabase();
+      const [job, profile, existing, settings, canApply] = await Promise.all([
+        data.getJob(jobId), data.getTeenProfile(), data.getMyApplicationForJob(jobId), data.getSettings(),
+        // Live mode: the database refuses applications until a parent confirms; check up front for a clear message.
+        sb && session ? sb.rpc("teen_can_apply", { p_teen: session.user.id }).then((r) => r.data !== false) : Promise.resolve(true),
+      ]);
+      return { job, profile, existing, settings, canApply };
     },
     [jobId, session?.user.id],
   );
@@ -100,6 +107,16 @@ export function ApplyForm({ jobId }: { jobId: string }) {
           <p className="mt-3 flex items-center justify-center gap-2 text-sm">Current status: <StatusBadge status={bundle.existing.status} /></p>
           <Link href="/dashboard/teen/applications" className="btn-primary mt-6">View my applications</Link>
         </div>
+      </div>
+    );
+
+  if (bundle && !bundle.canApply)
+    return (
+      <div className="container-page max-w-2xl space-y-4 py-16">
+        <h1 className="text-2xl font-bold">Before you apply to {job.title}</h1>
+        <p className="text-navy-600">A parent or guardian needs to confirm your TaskTeens account first. Once they do, come back to this page.</p>
+        <ParentLinkCard />
+        <Link href={`/jobs/${job.id}`} className="btn-ghost"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to the listing</Link>
       </div>
     );
 
