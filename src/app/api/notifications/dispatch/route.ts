@@ -22,7 +22,10 @@ async function handle(req: Request) {
     if (!auth.user) return NextResponse.json({ error: "Not allowed." }, { status: 401 });
   }
   try {
-    return NextResponse.json({ ok: true, ...(await dispatchDue(service, limit)) });
+    // Expire location sessions and raise missed check-ins first, so their alerts go out in this run.
+    const { data: tick, error: tickErr } = await service.rpc("safety_tick");
+    if (tickErr) console.error("[safety_tick]", tickErr.message);
+    return NextResponse.json({ ok: true, tick, ...(await dispatchDue(service, limit)) });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });
   }

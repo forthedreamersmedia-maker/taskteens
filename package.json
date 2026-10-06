@@ -16,6 +16,8 @@
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.117.0",
     "clsx": "^2.1.1",
+    "livekit-client": "^2.22.3",
+    "livekit-server-sdk": "^2.19.1",
     "lucide-react": "^0.460.0",
     "next": "15.5.26",
     "react": "^19.1.0",
