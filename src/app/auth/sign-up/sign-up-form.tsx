@@ -18,9 +18,11 @@ export function SignUpForm() {
   const router = useRouter();
   const sp = useSearchParams();
   const next = safeNext(sp.get("next"));
-  const [role, setRole] = useState<"teen" | "employer" | "">((sp.get("role") as "teen" | "employer") ?? "");
+  // Parent/guardian accounts are only created from an invitation link (role=parent&email=…).
+  const parentMode = sp.get("role") === "parent";
+  const [role, setRole] = useState<"teen" | "employer" | "parent" | "">(parentMode ? "parent" : ((sp.get("role") as "teen" | "employer") ?? ""));
   const [full_name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(parentMode ? sp.get("email") ?? "" : "");
   const [password, setPassword] = useState("");
   const [agree, setAgree] = useState(false);
   const [ageOk, setAgeOk] = useState(false);
@@ -39,13 +41,13 @@ export function SignUpForm() {
     setBusy(true);
     setErrors({});
     try {
-      const { needsEmailVerification } = await data.signUp({ full_name, email, password, role: parsed.data.role, captchaToken });
+      const { needsEmailVerification } = await data.signUp({ full_name, email, password, role: parsed.data.role, captchaToken, next });
       if (needsEmailVerification) {
         router.push(`/auth/verify?email=${encodeURIComponent(email)}`);
         return;
       }
       await refresh();
-      const dest = role === "employer" ? `/onboarding/employer${next ? `?next=${encodeURIComponent(next)}` : ""}` : next ?? "/dashboard/teen/profile";
+      const dest = role === "parent" ? next ?? "/dashboard/parent" : role === "employer" ? `/onboarding/employer${next ? `?next=${encodeURIComponent(next)}` : ""}` : next ?? "/dashboard/teen/profile";
       router.push(dest);
     } catch (err) {
       setErrors({ _form: errorMessage(err) });
@@ -60,8 +62,15 @@ export function SignUpForm() {
   ];
 
   return (
-    <AuthCard title="Create your account" subtitle="Free to join. Takes about a minute." footer={<>Already have an account? <Link href="/auth/sign-in" className="link">Sign in</Link></>}>
+    <AuthCard
+      title={parentMode ? "Create your parent account" : "Create your account"}
+      subtitle={parentMode ? "A separate account for you as parent or guardian — you never sign in as your teen." : "Free to join. Takes about a minute."}
+      footer={<>Already have an account? <Link href={`/auth/sign-in${next ? `?next=${encodeURIComponent(next)}` : ""}`} className="link">Sign in</Link></>}
+    >
       <form onSubmit={submit} noValidate className="space-y-5">
+        {parentMode ? (
+          <Alert tone="info">Use the email address the invitation was sent to. You&apos;ll confirm it, then come back to review consent.</Alert>
+        ) : (
         <fieldset>
           <legend className="label">Account type</legend>
           <div className="grid grid-cols-2 gap-3">
@@ -75,13 +84,14 @@ export function SignUpForm() {
             ))}
           </div>
           {errors.role && <p className="field-error">{errors.role}</p>}
-          <p className="mt-2 text-xs text-navy-400">Administrator accounts can&apos;t be created here.</p>
+          <p className="mt-2 text-xs text-navy-400">Parents and guardians: use the invitation link your teen sent you. Administrator accounts can&apos;t be created here.</p>
         </fieldset>
+        )}
         <Field label={role === "employer" ? "Your name" : "Full name"} required error={errors.full_name}>
           <input className="input" value={full_name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
         </Field>
         <Field label="Email" required error={errors.email}>
-          <input type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+          <input type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" readOnly={parentMode && !!sp.get("email")} />
         </Field>
         <Field label="Password" required error={errors.password} hint="At least 8 characters with a letter and a number.">
           <input type="password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />

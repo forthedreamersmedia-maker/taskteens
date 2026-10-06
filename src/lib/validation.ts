@@ -105,7 +105,7 @@ export const signUpSchema = z.object({
     .min(8, "Use at least 8 characters.")
     .regex(/[A-Za-z]/, "Include at least one letter.")
     .regex(/\d/, "Include at least one number."),
-  role: z.enum(["teen", "employer"], { errorMap: () => ({ message: "Choose an account type." }) }),
+  role: z.enum(["teen", "employer", "parent"], { errorMap: () => ({ message: "Choose an account type." }) }),
   agree: z.literal(true, { errorMap: () => ({ message: "You must accept the Terms and Community Guidelines." }) }),
   age_confirm: z.boolean().optional(),
 });
