@@ -21,7 +21,7 @@ export default function TeenOverview() {
   }, []);
   const { saved, toggle } = useSavedJobs();
   const completion = teenProfileCompletion(bundle?.profile);
-  const active = bundle?.apps.filter((a) => !["withdrawn", "not_selected"].includes(a.status)) ?? [];
+  const active = bundle?.apps.filter((a) => !["withdrawn", "not_selected", "parent_declined", "cancelled"].includes(a.status)) ?? [];
   const upcoming = bundle?.interviews.filter((i) => i.status === "proposed" || (i.status === "accepted" && i.confirmed_time && i.confirmed_time > new Date().toISOString())) ?? [];
 
   return (
@@ -52,7 +52,7 @@ export default function TeenOverview() {
         <StatCard label="Active applications" value={loading ? "–" : active.length} icon={FileText} tone="blue" />
         <StatCard label="Interviews" value={loading ? "–" : upcoming.length} icon={CalendarCheck} tone="coral" />
         <StatCard label="Saved jobs" value={saved.size} icon={Bookmark} />
-        <StatCard label="Selected" value={loading ? "–" : bundle?.apps.filter((a) => a.status === "selected").length ?? 0} icon={Sparkles} tone="green" />
+        <StatCard label="Confirmed jobs" value={loading ? "–" : bundle?.apps.filter((a) => a.status === "confirmed").length ?? 0} icon={Sparkles} tone="green" />
       </div>
 
       {upcoming.length > 0 && (

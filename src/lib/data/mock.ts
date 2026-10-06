@@ -399,8 +399,8 @@ export function createMockClient(): DataClient {
         teen_id: me.id,
         status: "submitted",
         applicant_name: input.applicant_name.trim(),
-        applicant_email: input.applicant_email.trim(),
-        applicant_phone: input.applicant_phone.trim(),
+        applicant_email: null,
+        applicant_phone: null,
         age_range: input.age_range,
         city: input.city.trim(),
         experience: input.experience.trim(),
@@ -429,7 +429,7 @@ export function createMockClient(): DataClient {
       pushNotification(db, me.id, "application_status", "Application sent", `Your application for “${job.title}” was delivered to ${employer?.display_name ?? "the employer"}.`, "/dashboard/teen/applications");
       if (employerUser)
         sendDemoEmail(db, employerNewApplicationEmail({ to: employerUser.email, site: site(), employerName: employer?.display_name ?? employerUser.full_name, jobTitle: job.title, applicantFirstName: firstName(app.applicant_name), applicationId: app.id }));
-      sendDemoEmail(db, teenConfirmationEmail({ to: app.applicant_email, site: site(), teenFirstName: firstName(app.applicant_name), jobTitle: job.title, employerName: employer?.display_name ?? "the employer" }));
+      sendDemoEmail(db, teenConfirmationEmail({ to: me.email, site: site(), teenFirstName: firstName(app.applicant_name), jobTitle: job.title, employerName: employer?.display_name ?? "the employer" }));
 
       // Keep teen profile in sync with what they just told us (helps next application).
       const tp = db.teen_profiles.find((p) => p.user_id === me.id);
@@ -711,7 +711,7 @@ export function createMockClient(): DataClient {
       pushNotification(db, a.teen_id, "application_status", `Status: ${APPLICATION_STATUS_LABEL[status]}`, `${employer?.display_name ?? "The employer"} updated your application for “${job?.title}”.${message ? ` Message: “${message}”` : ""}`, "/dashboard/teen/applications");
       const teen = db.teen_profiles.find((p) => p.user_id === a.teen_id);
       if (status !== "viewed" && teen?.email_notifications !== false)
-        sendDemoEmail(db, statusUpdateEmail({ to: a.applicant_email, site: site(), teenFirstName: firstName(a.applicant_name), jobTitle: job?.title ?? "", employerName: employer?.display_name ?? "", status, message }));
+        sendDemoEmail(db, statusUpdateEmail({ to: db.users.find((u) => u.id === a.teen_id)?.email ?? "", site: site(), teenFirstName: firstName(a.applicant_name), jobTitle: job?.title ?? "", employerName: employer?.display_name ?? "", status, message }));
       persist();
     },
     async listApplicationNotes(applicationId) {
@@ -759,7 +759,7 @@ export function createMockClient(): DataClient {
       const db = load();
       const a = db.applications.find((x) => x.id === applicationId && (x.teen_id === me.id || x.employer_id === me.id));
       if (!a) throw new DataError("not_found", "Application not found.");
-      if (a.status !== "selected") throw new DataError("invalid", "Only a job you were selected for can be marked completed.");
+      if (a.status !== "confirmed") throw new DataError("invalid", "Only a parent-approved job can be marked completed.");
       if (a.completed_at) return;
       a.completed_at = now();
       a.completed_by = me.id === a.teen_id ? "teen" : "employer";
@@ -795,7 +795,7 @@ export function createMockClient(): DataClient {
       const db = load();
       const a = db.applications.find((x) => x.id === applicationId && x.teen_id === me.id);
       if (!a) throw new DataError("not_found", "Application not found.");
-      if (a.status !== "selected" || !a.completed_at) throw new DataError("invalid", "You can rate an employer after the job is marked completed.");
+      if (a.status !== "confirmed" || !a.completed_at) throw new DataError("invalid", "You can rate an employer after the job is marked completed.");
       if (db.employer_reviews.some((r) => r.application_id === applicationId)) throw new DataError("duplicate", "You already rated this job.");
       if (!Number.isInteger(input.stars) || input.stars < 1 || input.stars > 5) throw new DataError("invalid", "Choose 1 to 5 stars.");
       db.employer_reviews.unshift({
@@ -825,7 +825,7 @@ export function createMockClient(): DataClient {
       const db = load();
       const a = db.applications.find((x) => x.id === applicationId && x.employer_id === me.id);
       if (!a) throw new DataError("not_found", "Application not found.");
-      if (a.status !== "selected" || !a.completed_at) throw new DataError("invalid", "Mark the job completed before leaving feedback.");
+      if (a.status !== "confirmed" || !a.completed_at) throw new DataError("invalid", "Mark the job completed before leaving feedback.");
       if (db.teen_feedback.some((f) => f.application_id === applicationId)) throw new DataError("duplicate", "You already left feedback for this job.");
       db.teen_feedback.unshift({
         id: uid("tfb"), application_id: a.id, job_id: a.job_id, employer_id: me.id, teen_id: a.teen_id,

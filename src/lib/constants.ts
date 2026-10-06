@@ -77,18 +77,24 @@ export const APPLICATION_STATUS_LABEL: Record<ApplicationStatus, string> = {
   submitted: "Submitted",
   viewed: "Viewed",
   interview_requested: "Interview requested",
-  selected: "Selected",
+  selected: "Selected — awaiting parent approval",
+  confirmed: "Confirmed by parent",
+  parent_declined: "Declined by parent",
   not_selected: "Not selected",
   withdrawn: "Withdrawn",
+  cancelled: "Cancelled",
 };
 
 export const APPLICATION_STATUS_TONE: Record<ApplicationStatus, "blue" | "navy" | "coral" | "green" | "gray"> = {
   submitted: "blue",
   viewed: "navy",
   interview_requested: "coral",
-  selected: "green",
+  selected: "coral",
+  confirmed: "green",
+  parent_declined: "gray",
   not_selected: "gray",
   withdrawn: "gray",
+  cancelled: "gray",
 };
 
 export const RECURRENCE_LABEL: Record<Recurrence, string> = { one_time: "One-time", recurring: "Recurring" };
