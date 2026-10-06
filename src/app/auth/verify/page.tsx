@@ -15,7 +15,7 @@ function Verify() {
   return (
     <AuthCard title="Confirm your email" subtitle={<>We sent a verification link to <strong>{email || "your inbox"}</strong>. Open it to activate your account.</>} footer={<Link href="/auth/sign-in" className="link">Back to sign in</Link>}>
       <MailCheck className="h-10 w-10 text-bay-500" aria-hidden="true" />
-      <p className="mt-3 text-sm text-navy-500">Didn&apos;t get it? Check spam, or resend the link.</p>
+      <p className="mt-3 text-sm text-navy-500">Didn&apos;t get it? Check spam, or resend the link. Teens: once you confirm, we&apos;ll email your parent or guardian their invitation.</p>
       {msg && <Alert tone={msg.tone} className="mt-3">{msg.text}</Alert>}
       <button
         type="button"

@@ -1,4 +1,5 @@
 "use client";
+import { RISK_FLAG_LABEL } from "@/lib/constants";
 import { ClipboardList, Star } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -27,7 +28,8 @@ export default function AdminListings() {
       title: `${a[0]!.toUpperCase()}${a.slice(1)} “${j.title}”?`,
       confirmLabel: a[0]!.toUpperCase() + a.slice(1),
       danger: a === "remove" || a === "reject",
-      requireNote: a === "remove" || a === "reject",
+      requireNote: a === "remove" || a === "reject" || ((a === "approve" || a === "restore") && (j.risk_flags?.length ?? 0) > 0),
+      description: (j.risk_flags?.length ?? 0) > 0 ? `Flagged for: ${j.risk_flags!.map((f) => RISK_FLAG_LABEL[f] ?? f).join(", ")}. Keyword flags are indicators only — you decide. Explain your decision in the note.` : undefined,
       run: (n) => data.adminModerateJob(j.id, a, n),
     });
 
@@ -59,7 +61,9 @@ export default function AdminListings() {
                     <Badge tone="gray">{j.status}</Badge>
                     {j.featured && <Badge tone="blue"><Star className="h-3 w-3" aria-hidden="true" /> Featured</Badge>}
                     {j.is_demo && <DemoBadge />}
+                    {j.risk_flags?.map((f) => <Badge key={f} tone="coral">⚑ {RISK_FLAG_LABEL[f] ?? f}</Badge>)}
                   </div>
+                  {(j.supervision || j.known_risks) && <p className="mt-1 text-xs text-navy-500">Supervision: {j.supervision ?? "—"} · Equipment: {j.equipment ?? "—"} · Risks: {j.known_risks ?? "—"}</p>}
                   <p className="mt-0.5 text-sm text-navy-500">{j.employer.display_name} · {j.city} · {formatPay(j)} · ages {j.min_age}+ · {timeAgo(j.created_at)}</p>
                 </div>
                 <div className="flex flex-wrap gap-1.5">

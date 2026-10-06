@@ -169,3 +169,34 @@ export const REPORT_REASONS = [
 /** Ratings rules */
 export const MIN_REVIEWS_FOR_SCORE = 3; // overall score is hidden until this many reviews
 export const RELIABLE_MIN_COMPLETED = 5; // "Reliable Employer" badge threshold
+
+export const WORK_SETTING_LABEL: Record<import("./types").WorkSetting, string> = {
+  outdoor: "Outdoors only (yard, porch, driveway)",
+  indoor_adult_present: "Indoors with an adult present the whole time",
+  public_place: "Public place (library, café, community center)",
+  remote: "Remote / online",
+};
+
+/** Spec §6: work TaskTeens does not allow (or holds for review) during the pilot. */
+export const PILOT_PROHIBITED = [
+  "Childcare or babysitting",
+  "Driving or transporting anyone",
+  "Being alone inside a home",
+  "Overnight work",
+  "Ladders, roofs or heights",
+  "Power tools, mowers or blowers",
+  "Chemicals (bleach, pesticides, solvents)",
+  "Construction, electrical or plumbing",
+  "Heavy lifting",
+  "Alcohol, cannabis, firearms, drugs or adult content",
+  "Handling cash",
+  "Unsupervised pet care",
+];
+
+export const PILOT_ALLOWED = ["Tutoring", "Yard cleanup without power tools", "Plant watering", "Simple organizing", "Exterior-only cleaning"];
+
+export const RISK_FLAG_LABEL: Record<string, string> = {
+  childcare: "Childcare", driving: "Driving", overnight: "Overnight", heights: "Ladders/heights", power_tools: "Power tools",
+  chemicals: "Chemicals", construction: "Construction", heavy_lifting: "Heavy lifting", restricted_substances_or_venues: "Alcohol/cannabis/firearms/adult",
+  cash_handling: "Cash handling", alone_in_home: "Alone in a home", unsupervised_pet_care: "Unsupervised pet care",
+};

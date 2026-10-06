@@ -8,12 +8,16 @@
 alter table public.teen_profiles
   add constraint teen_birth_date_range check (birth_date is null or (birth_date > date '1990-01-01' and birth_date <= current_date - interval '12 years'));
 
+alter table public.teen_profiles add column if not exists parent_phone text check (parent_phone is null or parent_phone ~ '^\+1\d{10}$');
+alter table public.parent_profiles add column if not exists phone_e164 text check (phone_e164 is null or phone_e164 ~ '^\+1\d{10}$');
+
 alter table public.parent_invitations
+  add column if not exists parent_phone text check (parent_phone is null or parent_phone ~ '^\+1\d{10}$'),
   add column if not exists email_status text not null default 'pending' check (email_status in ('pending','sent','failed','skipped')),
   add column if not exists email_error text,
   add column if not exists last_sent_at timestamptz;
 
-create or replace function public.create_parent_invitation(p_teen uuid, p_name text, p_email text, p_token_hash text)
+create or replace function public.create_parent_invitation(p_teen uuid, p_name text, p_email text, p_phone text, p_token_hash text)
 returns uuid language plpgsql security definer set search_path = public as $$
 declare v_teen public.users%rowtype; v_id uuid; v_recent int;
 begin
@@ -30,9 +34,9 @@ begin
     raise exception 'You can send up to 3 parent invitations a day. Try again tomorrow.' using errcode = 'P0001';
   end if;
   update public.parent_invitations set status = 'revoked' where teen_id = p_teen and status = 'pending';
-  insert into public.parent_invitations (teen_id, parent_name, parent_email, token_hash)
-  values (p_teen, trim(p_name), lower(trim(p_email)), p_token_hash) returning id into v_id;
-  update public.teen_profiles set parent_name = trim(p_name), parent_email = lower(trim(p_email)) where user_id = p_teen;
+  insert into public.parent_invitations (teen_id, parent_name, parent_email, parent_phone, token_hash)
+  values (p_teen, trim(p_name), lower(trim(p_email)), p_phone, p_token_hash) returning id into v_id;
+  update public.teen_profiles set parent_name = trim(p_name), parent_email = lower(trim(p_email)), parent_phone = coalesce(p_phone, parent_phone) where user_id = p_teen;
   insert into public.audit_logs (actor_id, actor_role, action, target_type, target_id) values (p_teen, 'teen', 'parent_invitation.create', 'parent_invitation', v_id::text);
   return v_id;
 end $$;
@@ -85,7 +89,12 @@ begin
   values (v_link, p_parent, i.teen_id, i.id, p_consent_version, p_statements, left(p_ip, 64), left(p_user_agent, 400));
 
   update public.parent_invitations set status = 'accepted', accepted_by = p_parent, accepted_at = now() where id = i.id;
-  update public.parent_profiles set display_name = coalesce(nullif(display_name,''), i.parent_name) where user_id = p_parent;
+  -- The phone number the teen gave is stored on the parent profile UNCONFIRMED (the parent can confirm it later).
+  perform set_config('taskteens.rpc', 'on', true);
+  update public.parent_profiles set display_name = coalesce(nullif(display_name,''), i.parent_name),
+                                    phone_e164 = coalesce(phone_e164, i.parent_phone)
+   where user_id = p_parent;
+  perform set_config('taskteens.rpc', '', true);
 
   insert into public.audit_logs (actor_id, actor_role, action, target_type, target_id, detail)
   values (p_parent, 'parent', 'parent_consent.give', 'teen', i.teen_id::text, jsonb_build_object('version', p_consent_version, 'location', coalesce(p_allow_location,false)));
@@ -173,7 +182,7 @@ language sql stable security definer set search_path = public as $$
   where l.parent_id = auth.uid() and l.status = 'active';
 $$;
 
-revoke execute on function public.create_parent_invitation(uuid, text, text, text) from public, anon, authenticated;
+revoke execute on function public.create_parent_invitation(uuid, text, text, text, text) from public, anon, authenticated;
 revoke execute on function public.record_invitation_email(uuid, text, text) from public, anon, authenticated;
 revoke execute on function public.parent_invitation_preview(text) from public, anon, authenticated;
 revoke execute on function public.accept_parent_invitation(text, uuid, text, jsonb, text, text, boolean) from public, anon, authenticated;
@@ -187,7 +196,36 @@ grant execute on function public.parent_set_location_permission(uuid, boolean) t
 grant execute on function public.parent_revoke_consent(uuid, text) to authenticated;
 grant execute on function public.my_parents() to authenticated;
 grant execute on function public.my_teens() to authenticated;
-grant execute on function public.create_parent_invitation(uuid, text, text, text) to service_role;
+grant execute on function public.create_parent_invitation(uuid, text, text, text, text) to service_role;
 grant execute on function public.record_invitation_email(uuid, text, text) to service_role;
 grant execute on function public.parent_invitation_preview(text) to service_role;
 grant execute on function public.accept_parent_invitation(text, uuid, text, jsonb, text, text, boolean) to service_role;
+
+-- Teen sign-up collects the parent's name, email and phone. They're kept privately on the teen
+-- profile; the invitation itself is sent once the teen confirms their own email (see app server).
+create or replace function public.handle_new_user() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  v_role text := case new.raw_user_meta_data->>'role' when 'employer' then 'employer' when 'parent' then 'parent' else 'teen' end;
+  v_name text := coalesce(nullif(new.raw_user_meta_data->>'full_name',''), split_part(new.email,'@',1));
+  v_pphone text := new.raw_user_meta_data->>'parent_phone';
+begin
+  insert into public.users (id, email, full_name, role) values (new.id, new.email, v_name, v_role) on conflict (id) do nothing;
+  if v_role = 'teen' then
+    insert into public.teen_profiles (user_id, display_name, parent_name, parent_email, parent_phone)
+    values (new.id, v_name,
+            nullif(left(trim(new.raw_user_meta_data->>'parent_name'), 80), ''),
+            nullif(lower(trim(new.raw_user_meta_data->>'parent_email')), ''),
+            case when v_pphone ~ '^\+1\d{10}$' then v_pphone end)
+    on conflict do nothing;
+  elsif v_role = 'parent' then
+    insert into public.parent_profiles (user_id, display_name) values (new.id, v_name) on conflict do nothing;
+  end if;
+  perform public.notify(new.id, 'system', 'Welcome to TaskTeens',
+    case v_role when 'teen' then 'Your parent or guardian will get an email invitation to confirm your account once you confirm your email.'
+                when 'parent' then 'Open your invitation link to confirm and link your teen''s account.'
+                else 'Finish setting up and verifying your employer profile to post your first job.' end,
+    case v_role when 'teen' then '/dashboard/teen' when 'parent' then '/dashboard/parent' else '/onboarding/employer' end);
+  return new;
+end $$;
+revoke execute on function public.handle_new_user() from public, anon, authenticated;

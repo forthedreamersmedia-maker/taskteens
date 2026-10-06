@@ -2,6 +2,7 @@
 import { BadgeCheck } from "lucide-react";
 import { useState } from "react";
 import { AdminShell } from "@/components/dashboard/admin-shell";
+import { AdminEmployerChecks } from "@/components/safety/admin-employer-checks";
 import { NoteActionModal, type PendingAction } from "@/components/dashboard/note-action";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/feedback";
@@ -18,7 +19,9 @@ export default function VerificationsPage() {
   const [tab, setTab] = useState<"pending" | "reviewed">("pending");
   const shown = list?.filter((v) => (tab === "pending" ? v.status === "pending" : v.status !== "pending")) ?? [];
   return (
-    <AdminShell title="Employer verification requests" subtitle="Manual profile review. Approving shows a “Verified profile” badge — it is not a background check.">
+    <AdminShell title="Employer verification" subtitle="Manual profile review. Approving marks the profile “Manually reviewed” — it is not a background check.">
+      <AdminEmployerChecks />
+      <h2 className="mb-3 text-lg font-bold">Manual review requests</h2>
       <div className="mb-4 flex gap-2">
         {(["pending", "reviewed"] as const).map((t) => <button key={t} onClick={() => setTab(t)} aria-pressed={tab === t} className={tab === t ? "btn-navy btn-sm capitalize" : "btn-outline btn-sm capitalize"}>{t}</button>)}
       </div>
@@ -46,7 +49,7 @@ export default function VerificationsPage() {
                 </dl>
                 {v.status === "pending" && (
                   <div className="mt-4 flex gap-2">
-                    <button className="btn-primary btn-sm" onClick={() => setAction({ title: `Approve ${v.employer_name}?`, description: "Their listings will show a Verified profile badge.", confirmLabel: "Approve", run: (n) => data.adminReviewVerification(v.id, true, n) })}>Approve</button>
+                    <button className="btn-primary btn-sm" onClick={() => setAction({ title: `Approve ${v.employer_name}?`, description: "Their profile will show “Manually reviewed”. They still need phone and address steps to publish.", confirmLabel: "Approve", run: (n) => data.adminReviewVerification(v.id, true, n) })}>Approve</button>
                     <button className="btn-danger btn-sm" onClick={() => setAction({ title: `Reject ${v.employer_name}?`, confirmLabel: "Reject", danger: true, requireNote: true, run: (n) => data.adminReviewVerification(v.id, false, n) })}>Reject</button>
                   </div>
                 )}

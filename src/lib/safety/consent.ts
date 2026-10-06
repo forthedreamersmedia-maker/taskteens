@@ -19,7 +19,7 @@ export const LOCATION_CONSENT_TEXT =
 
 export type ParentLinkStatus = "none" | "invited" | "confirmed" | "paused" | "revoked";
 
-/** Truthful labels — never "age verified" or "identity verified". */
+/** Truthful labels only — no claims of age or identity checks. */
 export const PARENT_STATUS_LABEL: Record<ParentLinkStatus, string> = {
   none: "No parent or guardian linked",
   invited: "Invitation sent — waiting for your parent",

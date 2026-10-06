@@ -119,7 +119,7 @@ function Onboarding() {
         {step === 2 && (
           <>
             <Alert tone="info" title="How verification works">
-              A TaskTeens administrator manually reviews what you submit here. If approved, a &ldquo;Verified profile&rdquo; badge appears on your listings. This is a pending-review workflow — <strong>not</strong> a background check or legal verification.
+              A TaskTeens administrator manually reviews what you submit here. If approved, your listings show &ldquo;Manually reviewed&rdquo;. This is a pending-review workflow — <strong>not</strong> a background check or legal verification.
             </Alert>
             <label className="flex items-center gap-3 text-sm font-medium">
               <input type="checkbox" className="h-4 w-4 accent-coral-500" checked={f.request_verification} onChange={(e) => set("request_verification", e.target.checked)} />

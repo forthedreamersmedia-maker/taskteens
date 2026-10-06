@@ -25,6 +25,9 @@ export function SignUpForm() {
   const [email, setEmail] = useState(parentMode ? sp.get("email") ?? "" : "");
   const [password, setPassword] = useState("");
   const [agree, setAgree] = useState(false);
+  const [parentName, setParentName] = useState("");
+  const [parentEmail, setParentEmail] = useState("");
+  const [parentPhone, setParentPhone] = useState("");
   const [ageOk, setAgeOk] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -36,16 +39,26 @@ export function SignUpForm() {
     const parsed = signUpSchema.safeParse({ full_name, email, password, role, agree });
     const errs = parsed.success ? {} : fieldErrors(parsed.error);
     if (role === "teen" && !ageOk) errs.age_confirm = "Please confirm you're at least 14.";
+    const parentDigits = parentPhone.replace(/\D/g, "");
+    if (role === "teen") {
+      if (parentName.trim().length < 2) errs.parent_name = "Enter your parent or guardian's name.";
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(parentEmail.trim())) errs.parent_email = "Enter your parent or guardian's email.";
+      else if (parentEmail.trim().toLowerCase() === email.trim().toLowerCase()) errs.parent_email = "Use your parent or guardian's own email, not yours.";
+      if (!(parentDigits.length === 10 || (parentDigits.length === 11 && parentDigits.startsWith("1")))) errs.parent_phone = "Enter a 10-digit phone number, e.g. (510) 555-0123.";
+    }
     if (captchaEnabled && !captchaToken) errs.captcha = "Please complete the security check.";
     if (Object.keys(errs).length || !parsed.success) return setErrors(errs);
     setBusy(true);
     setErrors({});
     try {
-      const { needsEmailVerification } = await data.signUp({ full_name, email, password, role: parsed.data.role, captchaToken, next });
+      const { needsEmailVerification } = await data.signUp({ full_name, email, password, role: parsed.data.role, captchaToken, next,
+        parent: role === "teen" ? { name: parentName.trim(), email: parentEmail.trim().toLowerCase(), phone: `+1${parentDigits.slice(-10)}` } : null });
       if (needsEmailVerification) {
         router.push(`/auth/verify?email=${encodeURIComponent(email)}`);
         return;
       }
+      // Email confirmation is off: the teen is already signed in, so send the parent invitation now.
+      if (role === "teen") await fetch("/api/parent-invitations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ auto: true }) }).catch(() => undefined);
       await refresh();
       const dest = role === "parent" ? next ?? "/dashboard/parent" : role === "employer" ? `/onboarding/employer${next ? `?next=${encodeURIComponent(next)}` : ""}` : next ?? "/dashboard/teen/profile";
       router.push(dest);
@@ -97,10 +110,19 @@ export function SignUpForm() {
           <input type="password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
         </Field>
         {role === "teen" && (
+          <fieldset className="space-y-3 rounded-2xl border border-navy-100 bg-cream-50 p-4">
+            <legend className="px-1 text-sm font-semibold">Your parent or guardian</legend>
+            <p className="text-xs text-navy-500">We&apos;ll email them an invitation once you confirm your email. They create their own account, approve every job, and can read your TaskTeens messages. You can&apos;t apply until they confirm.</p>
+            <Field label="Their name" required error={errors.parent_name}><input className="input" value={parentName} onChange={(e) => setParentName(e.target.value)} autoComplete="off" maxLength={80} /></Field>
+            <Field label="Their email" required error={errors.parent_email}><input type="email" className="input" value={parentEmail} onChange={(e) => setParentEmail(e.target.value)} autoComplete="off" /></Field>
+            <Field label="Their phone" required error={errors.parent_phone} hint="Private. Used for safety alerts — never shared with employers."><input type="tel" className="input" value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} autoComplete="off" placeholder="(510) 555-0123" /></Field>
+          </fieldset>
+        )}
+        {role === "teen" && (
           <div>
             <label className="flex items-start gap-2.5 text-sm">
               <input type="checkbox" checked={ageOk} onChange={(e) => setAgeOk(e.target.checked)} className="mt-0.5 h-4 w-4 accent-bay-500" />
-              <span>I&apos;m at least 14 years old, and I&apos;ll let a parent or guardian know I&apos;m using TaskTeens.</span>
+              <span>I&apos;m at least 14 years old, and my parent or guardian knows I&apos;m signing up.</span>
             </label>
             {errors.age_confirm && <p className="field-error">{errors.age_confirm}</p>}
           </div>

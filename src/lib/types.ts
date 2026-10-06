@@ -115,7 +115,21 @@ export interface Job {
   created_at: string;
   updated_at: string;
   published_at: string | null;
+  // Launch-safety fields (required to publish during the pilot)
+  start_time?: string | null; // HH:MM, America/Los_Angeles
+  duration_minutes?: number | null;
+  work_setting?: WorkSetting | null;
+  supervision?: string | null;
+  equipment?: string | null;
+  known_risks?: string | null;
+  /** Private service address id (never exposed publicly). */
+  address_id?: string | null;
+  /** Keyword flags that route the listing to a human moderator. */
+  risk_flags?: string[];
+  version?: number;
 }
+
+export type WorkSetting = "outdoor" | "indoor_adult_present" | "remote" | "public_place";
 
 /** Job joined with the public-safe employer fields. */
 export interface JobWithEmployer extends Job {
@@ -349,6 +363,8 @@ export interface Category {
   icon: string;
   active: boolean;
   sort: number;
+  /** Pilot policy: allowed, held for review, or prohibited. */
+  pilot_policy?: "allowed" | "review" | "prohibited";
 }
 
 export interface ServiceArea {
@@ -413,7 +429,7 @@ export interface ApplicationInput {
 
 export type JobInput = Omit<
   Job,
-  "id" | "employer_id" | "created_at" | "updated_at" | "published_at" | "moderation_status" | "featured" | "is_demo" | "image_url"
+  "id" | "employer_id" | "created_at" | "updated_at" | "published_at" | "moderation_status" | "featured" | "is_demo" | "image_url" | "risk_flags" | "version"
 > & { image_file?: File | null; image_url?: string | null };
 
 export interface SignUpInput {
@@ -425,6 +441,8 @@ export interface SignUpInput {
   captchaToken?: string | null;
   /** Same-site path to return to after the email confirmation link. */
   next?: string | null;
+  /** Teen sign-up: parent/guardian contact. The invitation is emailed once the teen confirms their email. */
+  parent?: { name: string; email: string; phone: string | null } | null;
 }
 
 export interface EmployerOnboardingInput {

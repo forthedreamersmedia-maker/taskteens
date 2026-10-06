@@ -106,7 +106,7 @@ export function createSupabaseClient(): DataClient {
         password: input.password,
         // role is read by the handle_new_user trigger, which only accepts teen|parent|employer
         options: {
-          data: { full_name: input.full_name, role: input.role },
+          data: { full_name: input.full_name, role: input.role, ...(input.parent ? { parent_name: input.parent.name, parent_email: input.parent.email, parent_phone: input.parent.phone } : {}) },
           emailRedirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(input.next && input.next.startsWith("/") && !input.next.startsWith("//") ? input.next : "/dashboard")}`,
           captchaToken: input.captchaToken ?? undefined,
         },
@@ -384,6 +384,7 @@ export function createSupabaseClient(): DataClient {
         service_area: input.service_area,
         website: input.website || null,
         description: input.description,
+        ...(input.legal_name ? { legal_name: input.legal_name } : {}),
         agreed_to_rules_at: new Date().toISOString(),
         onboarded: true,
       };
@@ -438,7 +439,13 @@ export function createSupabaseClient(): DataClient {
       if (error) fail(error);
     },
     async deleteJob(id) {
-      const { error } = await sb.from("jobs").delete().eq("id", id);
+      const { data: deleted, error } = await sb.from("jobs").delete().eq("id", id).select("id");
+      // RLS keeps listings that have applications (records must be preserved): close those instead.
+      if (!error && !deleted?.length) {
+        const { error: cErr } = await sb.from("jobs").update({ status: "closed" }).eq("id", id);
+        if (cErr) fail(cErr);
+        throw new DataError("has_applications", "This listing has applications, so it was closed instead of deleted to keep applicant records.");
+      }
       if (error) {
         if (error.code === "23503") {
           await sb.from("jobs").update({ status: "closed" }).eq("id", id);

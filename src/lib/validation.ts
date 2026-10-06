@@ -80,8 +80,26 @@ export const jobSchema = z
     transportation: z.enum(["none_needed", "transit_accessible", "bike_or_walk", "own_transportation", "employer_provides"]),
     transportation_notes: z.string().nullable(),
     status: z.enum(["draft", "published", "paused", "closed", "removed"]),
+    start_time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable().optional(),
+    duration_minutes: z.coerce.number().int().min(15).max(600).nullable().optional(),
+    work_setting: z.enum(["outdoor", "indoor_adult_present", "remote", "public_place"]).nullable().optional(),
+    supervision: z.string().trim().max(500).nullable().optional(),
+    equipment: z.string().trim().max(500).nullable().optional(),
+    known_risks: z.string().trim().max(500).nullable().optional(),
+    address_id: z.string().uuid().nullable().optional(),
   })
   .superRefine((v, ctx) => {
+    if (v.status === "published") {
+      if (!v.start_date) ctx.addIssue({ code: "custom", path: ["start_date"], message: "Add the date of the job." });
+      if (!v.start_time) ctx.addIssue({ code: "custom", path: ["start_time"], message: "Add a start time." });
+      if (!v.duration_minutes) ctx.addIssue({ code: "custom", path: ["duration_minutes"], message: "How long will it take?" });
+      if (!v.work_setting) ctx.addIssue({ code: "custom", path: ["work_setting"], message: "Choose where the work happens." });
+      if (!v.supervision?.trim()) ctx.addIssue({ code: "custom", path: ["supervision"], message: "Describe who supervises and how." });
+      else if (v.work_setting === "indoor_adult_present" && !/adult/i.test(v.supervision)) ctx.addIssue({ code: "custom", path: ["supervision"], message: "Indoor jobs need an adult present — say who will be there." });
+      if (v.equipment == null || !v.equipment.trim()) ctx.addIssue({ code: "custom", path: ["equipment"], message: "List equipment (or “None”)." });
+      if (v.known_risks == null || !v.known_risks.trim()) ctx.addIssue({ code: "custom", path: ["known_risks"], message: "List known risks (or “None known”)." });
+      if (v.work_setting !== "remote" && !v.address_id) ctx.addIssue({ code: "custom", path: ["address_id"], message: "Choose your reviewed service address." });
+    }
     if (v.opportunity_type === "volunteer" && v.pay_type !== "unpaid")
       ctx.addIssue({ code: "custom", path: ["pay_type"], message: "Volunteer roles are unpaid. Post it as a paid job or internship instead." });
     if (v.opportunity_type === "job" && v.pay_type === "unpaid")
