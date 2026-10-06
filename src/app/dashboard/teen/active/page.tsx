@@ -5,6 +5,7 @@ import { TeenShell } from "@/components/dashboard/teen-shell";
 import { RequiresBackend } from "@/components/safety/demo-notice";
 import { useLocationSharing } from "@/components/safety/location-sharing";
 import { PushToTalk } from "@/components/safety/push-to-talk";
+import { SosPanel } from "@/components/safety/sos";
 import { Alert, EmptyState, ErrorState, Skeleton } from "@/components/ui/feedback";
 import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth-context";
@@ -79,6 +80,12 @@ export default function TeenActive() {
                         </div>
                       )}
                     {loc?.state.kind === "error" && (loc.activeShift === null || loc.activeShift === j.shift_id) && <p className="mt-1 text-xs text-coral-700">{loc.state.message}</p>}
+                  </div>
+                )}
+                {j.window_open && (
+                  <div className="rounded-2xl border border-coral-100 p-3">
+                    <p className="mb-2 text-sm font-semibold">Need help?</p>
+                    <SosPanel compact applicationId={j.application_id} parentPhone={parentPhone} />
                   </div>
                 )}
                 {(j.window_open || j.open_alert_id) && session && <PushToTalk teenId={session.user.id} otherLabel="your parent" callHref={callParent} />}

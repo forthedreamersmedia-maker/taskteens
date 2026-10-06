@@ -11,6 +11,7 @@ import { isDemoMode } from "@/lib/config";
 import { timeRange, type ActiveJob } from "@/lib/safety/active";
 import { must, safetySupabase, useSafetyQuery } from "@/lib/safety/client";
 import { formatDateTime } from "@/lib/utils";
+import { ParentAlerts } from "@/components/safety/parent-alerts";
 
 interface Point { session_id: string; lat: number; lng: number; accuracy_m: number | null; recorded_at: string }
 
@@ -41,6 +42,7 @@ export default function ParentActive() {
   return (
     <ParentShell title="Active jobs" subtitle="Check-ins, optional live location and quick ways to reach your teen. In an emergency, call 911.">
       <a href="tel:911" className="btn mb-4 w-full bg-coral-600 text-white hover:bg-coral-700 sm:w-auto"><PhoneCall className="h-4 w-4" aria-hidden="true" /> Call 911</a>
+      <ParentAlerts />
       {q.loading && !q.data ? <Skeleton className="h-48" /> : q.error ? <ErrorState message={q.error} onRetry={q.reload} /> : !q.data!.jobs.length ? (
         <EmptyState icon={Clock} title="No confirmed jobs right now" body="Jobs you approve appear here from a week before until shortly after they end." />
       ) : (

@@ -16,6 +16,7 @@ import { kickNotifications } from "@/lib/safety/kick";
 import { LOCATION_CONSENT_TEXT, PARENT_STATUS_LABEL } from "@/lib/safety/consent";
 import { loadMyTeens, loadTeenApplications, type LinkedTeen } from "@/lib/safety/parent";
 import { formatDate } from "@/lib/utils";
+import { ParentAlerts } from "@/components/safety/parent-alerts";
 
 export default function ParentOverview() {
   const toast = useToast();
@@ -43,6 +44,7 @@ export default function ParentOverview() {
 
   return (
     <ParentShell title="Parent dashboard" subtitle="You approve every job before it's confirmed and can read all of your teen's TaskTeens messages.">
+      <ParentAlerts />
       {q.loading && !q.data ? (
         <div className="space-y-3"><Skeleton className="h-32" /><Skeleton className="h-24" /></div>
       ) : q.error ? (

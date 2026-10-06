@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { RestrictionNotice } from "@/components/safety/restriction-notice";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 
@@ -42,6 +43,7 @@ export function DashboardShell({ title, subtitle, nav, children, actions }: { ti
             </div>
             {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
           </div>
+          <RestrictionNotice />
           {children}
         </div>
       </div>
