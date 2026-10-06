@@ -106,7 +106,11 @@ export function createSupabaseClient(): DataClient {
         password: input.password,
         // role is read by the handle_new_user trigger, which only accepts teen|parent|employer
         options: {
+<<<<<<< HEAD
           data: { full_name: input.full_name, role: input.role, ...(input.parent ? { parent_name: input.parent.name, parent_email: input.parent.email, parent_phone: input.parent.phone } : {}) },
+=======
+          data: { full_name: input.full_name, role: input.role },
+>>>>>>> 3e1cd4106bc8ed94a84e04cc9b624fcfd5c621d7
           emailRedirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(input.next && input.next.startsWith("/") && !input.next.startsWith("//") ? input.next : "/dashboard")}`,
           captchaToken: input.captchaToken ?? undefined,
         },

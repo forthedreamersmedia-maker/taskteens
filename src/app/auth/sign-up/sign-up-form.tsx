@@ -51,8 +51,12 @@ export function SignUpForm() {
     setBusy(true);
     setErrors({});
     try {
+<<<<<<< HEAD
       const { needsEmailVerification } = await data.signUp({ full_name, email, password, role: parsed.data.role, captchaToken, next,
         parent: role === "teen" ? { name: parentName.trim(), email: parentEmail.trim().toLowerCase(), phone: `+1${parentDigits.slice(-10)}` } : null });
+=======
+      const { needsEmailVerification } = await data.signUp({ full_name, email, password, role: parsed.data.role, captchaToken, next });
+>>>>>>> 3e1cd4106bc8ed94a84e04cc9b624fcfd5c621d7
       if (needsEmailVerification) {
         router.push(`/auth/verify?email=${encodeURIComponent(email)}`);
         return;
