@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { dispatchDue } from "@/lib/safety/dispatch";
 import { applicationSchema, fieldErrors } from "@/lib/validation";
 import { getServerSupabase, getServiceSupabase } from "@/lib/supabase/server";
 import { employerNewApplicationEmail, teenConfirmationEmail } from "@/lib/email/templates";
@@ -84,5 +85,6 @@ export async function POST(req: Request) {
   }
   await Promise.allSettled(emails);
 
+  { const svc = getServiceSupabase(); if (svc) after(() => dispatchDue(svc, 15).catch((e) => console.error("[dispatch]", e))); }
   return NextResponse.json({ application: app });
 }

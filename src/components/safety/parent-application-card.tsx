@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/modal";
 import { StatusBadge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
 import { must, safetySupabase } from "@/lib/safety/client";
+import { kickNotifications } from "@/lib/safety/kick";
 import type { ParentApplication } from "@/lib/safety/parent";
 import { INDICATOR_LABELS, type TrustIndicators } from "@/lib/safety/verification";
 import { formatDate, formatDateTime, timeAgo } from "@/lib/utils";
@@ -51,6 +52,7 @@ export function ParentApplicationCard({ app, teenName, onChanged }: { app: Paren
       if (modal === "approve" || modal === "decline") must(await sb.rpc("parent_decide_application", { p_application: app.id, p_approve: modal === "approve", p_note: note || null }));
       else must(await sb.rpc("parent_withdraw_application", { p_application: app.id, p_note: note || null }));
       toast({ tone: "success", title: modal === "approve" ? "Job approved — it's confirmed" : modal === "decline" ? "Job declined" : "Job cancelled" });
+      kickNotifications();
       setModal(null); setNote(""); setDetail(null); onChanged();
     } catch (e) {
       toast({ tone: "error", title: "That didn't work", body: (e as Error).message });

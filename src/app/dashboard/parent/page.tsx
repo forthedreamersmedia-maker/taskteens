@@ -12,6 +12,7 @@ import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
 import { isDemoMode } from "@/lib/config";
 import { must, safetySupabase, useSafetyQuery } from "@/lib/safety/client";
+import { kickNotifications } from "@/lib/safety/kick";
 import { LOCATION_CONSENT_TEXT, PARENT_STATUS_LABEL } from "@/lib/safety/consent";
 import { loadMyTeens, loadTeenApplications, type LinkedTeen } from "@/lib/safety/parent";
 import { formatDate } from "@/lib/utils";
@@ -29,6 +30,7 @@ export default function ParentOverview() {
     setBusy(true);
     try {
       must(await fn());
+      kickNotifications();
       toast({ tone: "success", title: label });
       await q.reload();
     } catch (e) {

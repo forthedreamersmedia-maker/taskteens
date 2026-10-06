@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { dispatchDue } from "@/lib/safety/dispatch";
 import { z } from "zod";
 import { getServerSupabase, getServiceSupabase } from "@/lib/supabase/server";
 import { statusUpdateEmail } from "@/lib/email/templates";
@@ -68,5 +69,6 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       );
     }
   }
+  { const svc = getServiceSupabase(); if (svc) after(() => dispatchDue(svc, 15).catch((e) => console.error("[dispatch]", e))); }
   return NextResponse.json({ ok: true, messageHeld });
 }

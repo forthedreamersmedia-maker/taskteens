@@ -91,7 +91,7 @@ export default function TeenApplications() {
                     <StatusBadge status={a.status} />
                   </div>
                   <div className="mt-3"><Progress status={a.status} /></div>
-                  <p className="mt-2 text-xs text-navy-400">Applied {formatDate(a.created_at)} · last update {timeAgo(a.status_updated_at)}</p>
+                  <p className="mt-2 text-xs text-navy-400">Applied {formatDate(a.created_at)} · last update {timeAgo(a.status_updated_at)} · <Link href="/dashboard/teen/messages" className="link">Messages</Link></p>
                   {a.status === "selected" && (
                     <p className="mt-3 rounded-2xl bg-cream-100 px-3 py-2.5 text-sm text-navy-600">
                       You were selected! Your parent or guardian needs to approve this job before it&apos;s confirmed. The exact address appears here after they approve.

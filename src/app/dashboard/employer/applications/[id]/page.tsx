@@ -133,6 +133,7 @@ export default function ApplicationDetail() {
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
           <div className="card space-y-2 p-5">
             <h2 className="font-bold">Update status</h2>
+            <a href="/dashboard/employer/messages" className="btn-outline btn-sm w-full">Message the applicant (parent can read)</a>
             <p className="text-xs text-navy-500">The applicant gets an in-app notification and an email for each change.</p>
             <button type="button" disabled={withdrawn || completed || busy} onClick={() => setInterviewOpen(true)} className="btn-primary w-full"><CalendarPlus className="h-4 w-4" aria-hidden="true" /> Request interview</button>
             <button type="button" disabled={withdrawn || completed || busy || ["selected", "confirmed"].includes(app.status)} onClick={() => setDecision("selected")} className="btn w-full bg-emerald-600 text-white hover:bg-emerald-700"><Check className="h-4 w-4" aria-hidden="true" /> Select applicant</button>

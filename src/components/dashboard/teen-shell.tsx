@@ -1,10 +1,11 @@
 "use client";
-import { Bell, Bookmark, CalendarCheck, FileText, LayoutDashboard, Settings, UserRound } from "lucide-react";
+import { Bell, Bookmark, CalendarCheck, FileText, LayoutDashboard, Settings, UserRound, MessageSquare } from "lucide-react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 
 const NAV = [
   { href: "/dashboard/teen", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/teen/applications", label: "Applications", icon: FileText },
+  { href: "/dashboard/teen/messages", label: "Messages", icon: MessageSquare },
   { href: "/dashboard/teen/saved", label: "Saved jobs", icon: Bookmark },
   { href: "/dashboard/teen/interviews", label: "Interviews", icon: CalendarCheck },
   { href: "/dashboard/teen/notifications", label: "Notifications", icon: Bell },

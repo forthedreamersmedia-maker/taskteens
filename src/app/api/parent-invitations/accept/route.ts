@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { dispatchDue } from "@/lib/safety/dispatch";
 import { z } from "zod";
 import { isDemoMode } from "@/lib/config";
 import { CONSENT_STATEMENTS, CONSENT_VERSION } from "@/lib/safety/consent";
@@ -40,5 +41,6 @@ export async function POST(req: Request) {
     p_allow_location: parsed.data.allow_location,
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  { const svc = getServiceSupabase(); if (svc) after(() => dispatchDue(svc, 15).catch((e) => console.error("[dispatch]", e))); }
   return NextResponse.json({ ok: true });
 }
