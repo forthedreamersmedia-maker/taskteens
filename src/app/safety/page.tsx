@@ -60,7 +60,7 @@ export default function SafetyPage() {
             <li>• New listings are reviewed by a moderator before they go public (configurable by administrators).</li>
             <li>• Listing forms reject street addresses; application forms reject text that looks like an SSN.</li>
             <li>• Teen profiles are never public. Employers only see what a teen submits to their job.</li>
-            <li>• Employers can request a profile review. The &ldquo;Verified profile&rdquo; badge appears only after an admin approves it. <strong>TaskTeens does not currently perform background checks.</strong></li>
+            <li>• Employer profiles show separate indicators — email confirmed, phone confirmed, address reviewed, address possession confirmed and manually reviewed. A parent or guardian approves every job before it&apos;s confirmed. <strong>TaskTeens does not perform background checks.</strong></li>
             <li>• Report and block tools on every listing; emergency reports are prioritized in the moderation queue and emailed to the safety inbox.</li>
             <li>• Accounts can be suspended, and every admin action is recorded in an audit log.</li>
           </ul>

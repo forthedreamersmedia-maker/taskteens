@@ -32,10 +32,10 @@ export function VerifiedBadge({ status, className }: { status: VerificationStatu
   return (
     <span
       className={cn("inline-flex items-center gap-1 rounded-full bg-bay-50 px-2 py-0.5 text-xs font-semibold text-bay-700 ring-1 ring-inset ring-bay-200", className)}
-      title="Profile reviewed by a TaskTeens administrator. This is not a background check."
+      title="A TaskTeens administrator manually reviewed this profile. This is not a background check."
     >
       <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
-      Verified profile
+      Manually reviewed
     </span>
   );
 }

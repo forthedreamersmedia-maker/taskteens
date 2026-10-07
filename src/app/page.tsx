@@ -11,7 +11,7 @@ import { CATEGORIES, IMAGES, SERVICE_AREAS } from "@/lib/constants";
 const SAFETY_POINTS = [
   { icon: EyeOff, title: "Private by default", body: "Listings show only a city or neighborhood. Teen contact info goes only to employers you apply to." },
   { icon: Users, title: "Public-place interviews", body: "Interviews are video, phone or in a public place — and a parent or guardian is always welcome." },
-  { icon: BadgeCheck, title: "Honest verification", body: "“Verified profile” appears only after an admin review. We never imply a background check we didn't run." },
+  { icon: BadgeCheck, title: "Honest verification", body: "Employer profiles show each step separately — email, phone, address review and manual review. We never imply a background check we didn't run." },
   { icon: MessageSquareWarning, title: "No sensitive asks", body: "Employers may not request SSNs, bank logins or ID numbers through TaskTeens. Forms block obvious attempts." },
   { icon: Flag, title: "Report & block", body: "Report any listing or user in two clicks. Emergency reports go to the top of the moderation queue." },
   { icon: ShieldCheck, title: "Human moderation", body: "New listings are reviewed before going live, and every admin action is recorded in an audit log." },

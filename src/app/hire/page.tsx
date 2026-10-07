@@ -45,7 +45,7 @@ export default function HirePage() {
         <div className="grid gap-8 rounded-4xl bg-white p-8 shadow-card ring-1 ring-navy-100 lg:grid-cols-2">
           <div>
             <h2 id="verif" className="flex items-center gap-2 text-2xl font-bold"><BadgeCheck className="h-6 w-6 text-bay-500" aria-hidden="true" /> Profile verification</h2>
-            <p className="mt-3 text-navy-600">During onboarding you can request a profile review. A TaskTeens administrator checks the information you submit (for example, your registered business name or website). When approved, a &ldquo;Verified profile&rdquo; badge appears on your listings.</p>
+            <p className="mt-3 text-navy-600">During onboarding you can request a profile review. A TaskTeens administrator checks the information you submit (for example, your registered business name or website). To publish during the pilot you confirm your email and phone, add a private service address that an administrator reviews, and pass a manual review. Each step shows separately on your listings.</p>
             <p className="mt-3 text-sm text-navy-500">This is a manual profile review, not a background check or legal verification. TaskTeens has not integrated a third-party verification provider in this version.</p>
           </div>
           <div>

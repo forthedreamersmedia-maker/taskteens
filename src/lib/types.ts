@@ -1,7 +1,7 @@
 // Domain types shared by the UI, the demo (mock) data layer and the Supabase data layer.
 // Column names mirror supabase/migrations/0001_schema.sql (snake_case).
 
-export type Role = "teen" | "employer" | "admin";
+export type Role = "teen" | "parent" | "employer" | "admin";
 export type AccountStatus = "active" | "suspended";
 
 export type JobStatus = "draft" | "published" | "paused" | "closed" | "removed";
@@ -17,9 +17,12 @@ export type ApplicationStatus =
   | "submitted"
   | "viewed"
   | "interview_requested"
-  | "selected"
+  | "selected" // employer chose this teen — awaiting parent/guardian approval
+  | "confirmed" // parent/guardian approved this specific job
+  | "parent_declined"
   | "not_selected"
-  | "withdrawn";
+  | "withdrawn"
+  | "cancelled";
 
 export type VerificationStatus = "unverified" | "pending" | "verified" | "rejected";
 export type EmployerType = "individual" | "business";
@@ -54,6 +57,8 @@ export interface TeenProfile {
   work_permit_status: WorkPermitStatus | null;
   guardian_consent_status: GuardianConsentStatus | null;
   email_notifications: boolean;
+  /** Private. Never shown to employers. */
+  birth_date?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -110,7 +115,21 @@ export interface Job {
   created_at: string;
   updated_at: string;
   published_at: string | null;
+  // Launch-safety fields (required to publish during the pilot)
+  start_time?: string | null; // HH:MM, America/Los_Angeles
+  duration_minutes?: number | null;
+  work_setting?: WorkSetting | null;
+  supervision?: string | null;
+  equipment?: string | null;
+  known_risks?: string | null;
+  /** Private service address id (never exposed publicly). */
+  address_id?: string | null;
+  /** Keyword flags that route the listing to a human moderator. */
+  risk_flags?: string[];
+  version?: number;
 }
+
+export type WorkSetting = "outdoor" | "indoor_adult_present" | "remote" | "public_place";
 
 /** Job joined with the public-safe employer fields. */
 export interface JobWithEmployer extends Job {
@@ -124,8 +143,9 @@ export interface Application {
   teen_id: string;
   status: ApplicationStatus;
   applicant_name: string;
-  applicant_email: string;
-  applicant_phone: string;
+  /** No longer collected — teens and employers talk through moderated TaskTeens messages. */
+  applicant_email: string | null;
+  applicant_phone: string | null;
   age_range: AgeRange;
   city: string;
   experience: string;
@@ -173,7 +193,10 @@ export type NotificationKind =
   | "interview_response"
   | "verification_update"
   | "listing_moderation"
-  | "system";
+  | "system"
+  | "parent_invitation" | "parent_confirmed" | "parent_approval" | "message" | "contact_flag" | "job_reminder" | "checkin"
+  | "missed_checkin" | "job_completed" | "incident" | "incident_response" | "restriction" | "emergency" | "emergency_resolved"
+  | "consent_revoked" | "safety_alert";
 
 export interface Notification {
   id: string;
@@ -340,6 +363,8 @@ export interface Category {
   icon: string;
   active: boolean;
   sort: number;
+  /** Pilot policy: allowed, held for review, or prohibited. */
+  pilot_policy?: "allowed" | "review" | "prohibited";
 }
 
 export interface ServiceArea {
@@ -390,8 +415,6 @@ export interface ApplicationInput {
   applicant_name: string;
   age_range: AgeRange;
   city: string;
-  applicant_email: string;
-  applicant_phone: string;
   experience: string;
   skills: string[];
   availability: string;
@@ -406,7 +429,7 @@ export interface ApplicationInput {
 
 export type JobInput = Omit<
   Job,
-  "id" | "employer_id" | "created_at" | "updated_at" | "published_at" | "moderation_status" | "featured" | "is_demo" | "image_url"
+  "id" | "employer_id" | "created_at" | "updated_at" | "published_at" | "moderation_status" | "featured" | "is_demo" | "image_url" | "risk_flags" | "version"
 > & { image_file?: File | null; image_url?: string | null };
 
 export interface SignUpInput {
@@ -416,6 +439,10 @@ export interface SignUpInput {
   role: Exclude<Role, "admin">;
   /** Cloudflare Turnstile token, verified by Supabase Auth when CAPTCHA protection is on. */
   captchaToken?: string | null;
+  /** Same-site path to return to after the email confirmation link. */
+  next?: string | null;
+  /** Teen sign-up: parent/guardian contact. The invitation is emailed once the teen confirms their email. */
+  parent?: { name: string; email: string; phone: string | null } | null;
 }
 
 export interface EmployerOnboardingInput {

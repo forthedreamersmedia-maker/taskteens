@@ -31,11 +31,11 @@ export default function EmployerOverview() {
     <EmployerShell title={b?.profile?.display_name ?? "Employer dashboard"} subtitle="Applications arrive here automatically the moment a teen applies.">
       {v && v !== "verified" && (
         <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-bay-200 bg-bay-50 p-4 text-sm text-bay-900 sm:flex-row sm:items-center sm:justify-between">
-          <p className="flex items-center gap-2"><Info className="h-4 w-4 shrink-0" aria-hidden="true" /> {v === "pending" ? "Your profile review is pending. Your listings still work while you wait." : "Request a profile review to earn the Verified profile badge."}</p>
-          {v !== "pending" && <Link href="/dashboard/employer/settings" className="btn-primary btn-sm">Request review</Link>}
+          <p className="flex items-center gap-2"><Info className="h-4 w-4 shrink-0" aria-hidden="true" /> {v === "pending" ? "Your manual review is pending. Publishing unlocks once every verification step is done." : "Finish verification (phone, service address and manual review) to publish listings."}</p>
+          <Link href="/dashboard/employer/verification" className="btn-primary btn-sm">Verification steps</Link>
         </div>
       )}
-      {v === "verified" && <p className="mb-5 inline-flex items-center gap-1.5 rounded-full bg-bay-50 px-3 py-1 text-xs font-semibold text-bay-700"><BadgeCheck className="h-4 w-4" aria-hidden="true" /> Verified profile (admin-reviewed, not a background check)</p>}
+      {v === "verified" && <p className="mb-5 inline-flex items-center gap-1.5 rounded-full bg-bay-50 px-3 py-1 text-xs font-semibold text-bay-700"><BadgeCheck className="h-4 w-4" aria-hidden="true" /> Manually reviewed (not a background check)</p>}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Active listings" value={s?.active ?? "–"} icon={ClipboardList} tone="blue" hint={s ? `${s.paused} paused` : undefined} />

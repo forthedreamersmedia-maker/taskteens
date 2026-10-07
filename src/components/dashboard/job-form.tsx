@@ -9,13 +9,16 @@ import { TagInput } from "@/components/ui/tag-input";
 import { useToast } from "@/components/ui/toast";
 import { useData } from "@/lib/auth-context";
 import { useAsync } from "@/lib/hooks/use-async";
-import { CATEGORY_IMAGES, CITIES, NEIGHBORHOODS, OPPORTUNITY_TYPES, SCHEDULE_TAGS, TRANSPORTATION_LABEL } from "@/lib/constants";
+import { CATEGORY_IMAGES, CITIES, NEIGHBORHOODS, OPPORTUNITY_TYPES, PILOT_ALLOWED, PILOT_PROHIBITED, SCHEDULE_TAGS, TRANSPORTATION_LABEL, WORK_SETTING_LABEL } from "@/lib/constants";
+import { safetySupabase, useSafetyQuery } from "@/lib/safety/client";
+import { ADDRESS_STATUS_LABEL, type AddressStatus } from "@/lib/safety/verification";
+import Link from "next/link";
 import { useCategories, useServiceAreas } from "@/lib/hooks/use-reference";
 import type { Job, JobInput, JobStatus, OpportunityType } from "@/lib/types";
 import { fieldErrors, jobSchema, LOW_HOURLY_WARNING_THRESHOLD } from "@/lib/validation";
 import { cn, errorMessage } from "@/lib/utils";
 
-type FormState = Omit<JobInput, "pay_min" | "pay_max" | "min_age" | "openings"> & { pay_min: string; pay_max: string; min_age: string; openings: string };
+type FormState = Omit<JobInput, "pay_min" | "pay_max" | "min_age" | "openings" | "duration_minutes"> & { pay_min: string; pay_max: string; min_age: string; openings: string; duration_minutes: string };
 
 function fromJob(j?: Job | null): FormState {
   return {
@@ -45,6 +48,13 @@ function fromJob(j?: Job | null): FormState {
     transportation_notes: j?.transportation_notes ?? "",
     status: j?.status ?? "draft",
     image_url: j?.image_url ?? null,
+    start_time: j?.start_time ? j.start_time.slice(0, 5) : "",
+    duration_minutes: j?.duration_minutes ? String(j.duration_minutes) : "",
+    work_setting: j?.work_setting ?? null,
+    supervision: j?.supervision ?? "",
+    equipment: j?.equipment ?? "",
+    known_risks: j?.known_risks ?? "",
+    address_id: j?.address_id ?? null,
   };
 }
 
@@ -60,6 +70,9 @@ export function JobForm({ job }: { job?: Job | null }) {
   const [preview, setPreview] = useState<string | null>(job?.image_url ?? null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<JobStatus | null>(null);
+  const addresses = useSafetyQuery(async (sb) => ((await sb.from("employer_addresses").select("id,line1,city,status").order("created_at")).data ?? []) as { id: string; line1: string; city: string; status: AddressStatus }[], []);
+  const live = !!safetySupabase();
+  const policyOf = (slug: string) => CATEGORIES.find((c) => c.slug === slug)?.pilot_policy ?? "review";
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => {
     setF((x) => ({ ...x, [k]: v }));
@@ -102,14 +115,22 @@ export function JobForm({ job }: { job?: Job | null }) {
       deadline: f.deadline || null,
       transportation_notes: f.transportation_notes || null,
       service_area: f.service_area || SERVICE_AREAS.find((a) => a.cities.includes(f.city))?.slug || "",
+      start_time: f.start_time || null,
+      duration_minutes: f.duration_minutes ? Number(f.duration_minutes) : null,
+      supervision: f.supervision?.trim() || null,
+      equipment: f.equipment?.trim() || null,
+      known_risks: f.known_risks?.trim() || null,
+      address_id: f.address_id || null,
+      // Demo mode has no private addresses or verification; only the live database enforces these.
+      ...(live ? {} : { address_id: null }),
     };
-    const parsed = jobSchema.safeParse(candidate);
+    const parsed = jobSchema.safeParse(live ? candidate : { ...candidate, status: candidate.status === "published" ? "draft" : candidate.status });
     if (!parsed.success) {
       setErrors(fieldErrors(parsed.error));
       toast({ tone: "error", title: "Please fix the highlighted fields" });
       return;
     }
-    const payload = parsed.data as unknown as JobInput;
+    const payload = { ...(parsed.data as unknown as JobInput), status } as JobInput;
     setBusy(status);
     try {
       const input: JobInput = { ...payload, image_file: imageFile, image_url: imageFile ? null : preview ?? CATEGORY_IMAGES[payload.category] ?? null };
@@ -131,6 +152,10 @@ export function JobForm({ job }: { job?: Job | null }) {
   return (
     <form onSubmit={(e) => { e.preventDefault(); submit("published"); }} noValidate className="space-y-6">
       {settings?.require_job_approval && <Alert tone="info">New listings are reviewed by a TaskTeens moderator before they appear publicly — usually quickly.</Alert>}
+      <Alert tone="warn" title="Pilot job rules">
+        <p>Allowed during the pilot: {PILOT_ALLOWED.join(", ")}. Other categories are held for moderator review.</p>
+        <p className="mt-1">Not allowed: {PILOT_PROHIBITED.join(" · ")}. Listings that mention these are flagged automatically for a human moderator.</p>
+      </Alert>
 
       <section className="card space-y-5 p-5 sm:p-6" aria-labelledby="s-basics">
         <h2 id="s-basics" className="text-lg font-bold">The basics</h2>
@@ -150,7 +175,7 @@ export function JobForm({ job }: { job?: Job | null }) {
           <Field label="Category" required error={errors.category}>
             <select className="input" value={f.category} onChange={(e) => set("category", e.target.value)}>
               <option value="">Choose…</option>
-              {CATEGORIES.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
+              {CATEGORIES.filter((c) => c.pilot_policy !== "prohibited").map((c) => <option key={c.slug} value={c.slug}>{c.name}{c.pilot_policy === "review" ? " (moderator review)" : ""}</option>)}
             </select>
           </Field>
           <Field label="Work setting" required>
@@ -188,7 +213,7 @@ export function JobForm({ job }: { job?: Job | null }) {
 
       <section className="card space-y-5 p-5 sm:p-6" aria-labelledby="s-loc">
         <h2 id="s-loc" className="text-lg font-bold">Location</h2>
-        <Alert tone="warn">Don&apos;t enter a street address. Listings show only the city and an approximate neighborhood. Share the exact location privately after you&apos;ve selected someone.</Alert>
+        <Alert tone="warn">Don&apos;t enter a street address. Listings show only the city and an approximate neighborhood. Choose your private service address in the safety section — TaskTeens releases it only after a parent approves the job.</Alert>
         <div className="grid gap-5 sm:grid-cols-3">
           <Field label="City" required error={errors.city}>
             <select className="input" value={f.city} onChange={(e) => { set("city", e.target.value); set("service_area", SERVICE_AREAS.find((a) => a.cities.includes(e.target.value))?.slug ?? ""); }}>
@@ -276,9 +301,51 @@ export function JobForm({ job }: { job?: Job | null }) {
             </select>
           </Field>
           <Field label="Openings" required error={errors.openings}><input type="number" min={1} max={50} className="input" value={f.openings} onChange={(e) => set("openings", e.target.value)} /></Field>
-          <Field label="Start date" optional><input type="date" className="input" value={f.start_date ?? ""} onChange={(e) => set("start_date", e.target.value)} /></Field>
           <Field label="Application deadline" optional error={errors.deadline}><input type="date" className="input" value={f.deadline ?? ""} onChange={(e) => set("deadline", e.target.value)} min={new Date().toISOString().slice(0, 10)} /></Field>
         </div>
+      </section>
+
+      <section className="card space-y-5 p-5 sm:p-6" aria-labelledby="s-safety">
+        <div>
+          <h2 id="s-safety" className="text-lg font-bold">Date, supervision &amp; safety</h2>
+          <p className="mt-1 text-sm text-navy-500">Required to publish. Parents read this before approving the job, and any later change to these details asks them to approve again.</p>
+        </div>
+        {f.category && policyOf(f.category) === "review" && <Alert tone="info">This category is held for moderator review during the pilot.</Alert>}
+        <div className="grid gap-5 sm:grid-cols-3">
+          <Field label="Date" required error={errors.start_date}><input type="date" className="input" value={f.start_date ?? ""} min={new Date().toISOString().slice(0, 10)} onChange={(e) => set("start_date", e.target.value)} /></Field>
+          <Field label="Start time" required error={errors.start_time}><input type="time" className="input" value={f.start_time ?? ""} onChange={(e) => set("start_time", e.target.value)} /></Field>
+          <Field label="Expected duration" required error={errors.duration_minutes}>
+            <select className="input" value={f.duration_minutes} onChange={(e) => set("duration_minutes", e.target.value)}>
+              <option value="">Choose…</option>
+              {[30, 45, 60, 90, 120, 150, 180, 240, 300, 360].map((m) => <option key={m} value={m}>{m < 60 ? `${m} min` : `${m / 60} hr${m > 60 ? "s" : ""}`}</option>)}
+            </select>
+          </Field>
+        </div>
+        <Field label="Where the work happens" required error={errors.work_setting}>
+          <select className="input" value={f.work_setting ?? ""} onChange={(e) => set("work_setting", (e.target.value || null) as FormState["work_setting"])}>
+            <option value="">Choose…</option>
+            {Object.entries(WORK_SETTING_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+        </Field>
+        <Field label="Supervision" required error={errors.supervision} hint="Who is the adult on site, and will they be there the whole time? Teens may not be alone inside a home.">
+          <textarea className="input min-h-[70px]" maxLength={500} value={f.supervision ?? ""} onChange={(e) => set("supervision", e.target.value)} placeholder="e.g. I (adult homeowner) will be in the yard the whole time." />
+        </Field>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Equipment" required error={errors.equipment} hint="What you provide and what to bring. No power tools during the pilot."><textarea className="input min-h-[70px]" maxLength={500} value={f.equipment ?? ""} onChange={(e) => set("equipment", e.target.value)} placeholder="e.g. Rakes, gloves and bags provided." /></Field>
+          <Field label="Known risks" required error={errors.known_risks} hint="Pets, uneven ground, stairs, allergies… or “None known”."><textarea className="input min-h-[70px]" maxLength={500} value={f.known_risks ?? ""} onChange={(e) => set("known_risks", e.target.value)} placeholder="e.g. Friendly dog in the house (stays inside)." /></Field>
+        </div>
+        {f.work_setting !== "remote" && (
+          <Field label="Service address (private)" required error={errors.address_id} hint="Shown only to the teen and their parent after the parent approves this job.">
+            {!live ? <p className="text-sm text-navy-500">Private addresses require the live backend.</p> : (addresses.data?.length ?? 0) === 0 ? (
+              <p className="text-sm text-navy-600">Add a service address on your <Link href="/dashboard/employer/verification" className="link">Verification</Link> page first.</p>
+            ) : (
+              <select className="input" value={f.address_id ?? ""} onChange={(e) => set("address_id", e.target.value || null)}>
+                <option value="">Choose…</option>
+                {addresses.data!.map((a) => <option key={a.id} value={a.id} disabled={a.status === "rejected"}>{a.line1}, {a.city} — {ADDRESS_STATUS_LABEL[a.status]}</option>)}
+              </select>
+            )}
+          </Field>
+        )}
       </section>
 
       <section className="card p-5 sm:p-6" aria-labelledby="s-img">

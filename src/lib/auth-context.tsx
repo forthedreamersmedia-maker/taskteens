@@ -49,5 +49,6 @@ export function useData() {
 export function dashboardPathFor(role: string | undefined) {
   if (role === "admin") return "/admin";
   if (role === "employer") return "/dashboard/employer";
+  if (role === "parent") return "/dashboard/parent";
   return "/dashboard/teen";
 }

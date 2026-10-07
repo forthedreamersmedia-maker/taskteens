@@ -32,3 +32,7 @@ export const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true" || !SUPAB
  */
 export const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
 export const captchaEnabled = !!TURNSTILE_SITE_KEY;
+
+/** LiveKit WebSocket URL for push-to-talk. Push-to-talk is shown as unavailable until this and the server keys are set. */
+export const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL?.trim() ?? "";
+export const pttEnabled = !!LIVEKIT_URL && !isDemoMode;

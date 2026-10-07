@@ -1,6 +1,7 @@
 "use client";
 import { FileText, Trash2, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ParentLinkCard } from "@/components/safety/parent-link-card";
 import { TeenShell } from "@/components/dashboard/teen-shell";
 import { Field } from "@/components/ui/field";
 import { ErrorState, PageLoader } from "@/components/ui/feedback";
@@ -75,6 +76,7 @@ export default function TeenProfilePage() {
 
   return (
     <TeenShell title="Profile & résumé" subtitle={`${completion.percent}% complete · Your profile is private. It's used to prefill applications — employers only see what you submit.`}>
+      <div className="mb-5"><ParentLinkCard /></div>
       <form onSubmit={save} noValidate className="space-y-6">
         <section className="card grid gap-5 p-5 sm:grid-cols-2 sm:p-6" aria-labelledby="basics">
           <h2 id="basics" className="text-lg font-bold sm:col-span-2">Basics</h2>
@@ -86,6 +88,9 @@ export default function TeenProfilePage() {
               <option value="">Choose…</option>
               {AGE_RANGES.map((a) => <option key={a}>{a}</option>)}
             </select>
+          </Field>
+          <Field label="Date of birth" optional hint="Private — never shown to employers. Your age range is enough if you prefer.">
+            <input type="date" className="input" value={p.birth_date ?? ""} max={new Date(Date.now() - 12 * 365.25 * 864e5).toISOString().slice(0, 10)} onChange={(e) => set("birth_date", e.target.value || null)} />
           </Field>
           <Field label="City" error={errs.city} hint="City only — never your street address.">
             <select className="input" value={p.city ?? ""} onChange={(e) => set("city", e.target.value || null)}>

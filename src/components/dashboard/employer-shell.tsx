@@ -1,5 +1,5 @@
 "use client";
-import { Bell, CalendarCheck, ClipboardList, Inbox, LayoutDashboard, Plus, Settings } from "lucide-react";
+import { Bell, CalendarCheck, ClipboardList, Inbox, LayoutDashboard, Plus, Settings, ShieldCheck, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 
@@ -7,9 +7,11 @@ const NAV = [
   { href: "/dashboard/employer", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/employer/listings", label: "Listings", icon: ClipboardList },
   { href: "/dashboard/employer/applications", label: "Applicants", icon: Inbox },
+  { href: "/dashboard/employer/messages", label: "Messages", icon: MessageSquare },
   { href: "/dashboard/employer/interviews", label: "Interviews", icon: CalendarCheck },
   { href: "/dashboard/employer/notifications", label: "Notifications", icon: Bell },
-  { href: "/dashboard/employer/settings", label: "Account & verification", icon: Settings },
+  { href: "/dashboard/employer/verification", label: "Verification", icon: ShieldCheck },
+  { href: "/dashboard/employer/settings", label: "Account", icon: Settings },
 ];
 
 export function EmployerShell({ actions, ...props }: { title: string; subtitle?: string; children: React.ReactNode; actions?: React.ReactNode }) {

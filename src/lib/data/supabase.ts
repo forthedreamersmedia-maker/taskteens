@@ -95,8 +95,11 @@ export function createSupabaseClient(): DataClient {
     // ------------------------------------------------------------------ auth
     getSession: loadSession,
     onAuthChange(cb) {
-      const { data } = sb.auth.onAuthStateChange(() => {
-        loadSession().then(cb);
+      // Token refreshes don't change who is signed in, so they don't need a reload. Other events are
+      // handled outside the auth callback: calling auth methods inside it can re-trigger refreshes in a loop.
+      const { data } = sb.auth.onAuthStateChange((event) => {
+        if (event === "TOKEN_REFRESHED") return;
+        setTimeout(() => { loadSession().then(cb).catch(() => cb(null)); }, 0);
       });
       return () => data.subscription.unsubscribe();
     },
@@ -104,10 +107,10 @@ export function createSupabaseClient(): DataClient {
       const { data, error } = await sb.auth.signUp({
         email: input.email,
         password: input.password,
-        // role is read by the handle_new_user trigger, which only accepts teen|employer
+        // role is read by the handle_new_user trigger, which only accepts teen|parent|employer
         options: {
-          data: { full_name: input.full_name, role: input.role },
-          emailRedirectTo: `${SITE_URL}/auth/callback?next=/dashboard`,
+          data: { full_name: input.full_name, role: input.role, ...(input.parent ? { parent_name: input.parent.name, parent_email: input.parent.email, parent_phone: input.parent.phone } : {}) },
+          emailRedirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(input.next && input.next.startsWith("/") && !input.next.startsWith("//") ? input.next : "/dashboard")}`,
           captchaToken: input.captchaToken ?? undefined,
         },
       });
@@ -142,8 +145,12 @@ export function createSupabaseClient(): DataClient {
       }
     },
     async updatePassword(password) {
-      const { error } = await sb.auth.updateUser({ password });
-      if (error) fail(error);
+      // Done on the server with the cookie session set by the reset link, so a stale browser tab can't interfere.
+      const res = await fetch("/api/auth/update-password", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password }) });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new DataError(res.status === 401 ? "unauthenticated" : "invalid", body.error ?? "Couldn't update your password. Request a new reset link and try again.");
+      }
     },
     async resendVerification(email) {
       const { error } = await sb.auth.resend({ type: "signup", email });
@@ -384,6 +391,7 @@ export function createSupabaseClient(): DataClient {
         service_area: input.service_area,
         website: input.website || null,
         description: input.description,
+        ...(input.legal_name ? { legal_name: input.legal_name } : {}),
         agreed_to_rules_at: new Date().toISOString(),
         onboarded: true,
       };
@@ -438,7 +446,13 @@ export function createSupabaseClient(): DataClient {
       if (error) fail(error);
     },
     async deleteJob(id) {
-      const { error } = await sb.from("jobs").delete().eq("id", id);
+      const { data: deleted, error } = await sb.from("jobs").delete().eq("id", id).select("id");
+      // RLS keeps listings that have applications (records must be preserved): close those instead.
+      if (!error && !deleted?.length) {
+        const { error: cErr } = await sb.from("jobs").update({ status: "closed" }).eq("id", id);
+        if (cErr) fail(cErr);
+        throw new DataError("has_applications", "This listing has applications, so it was closed instead of deleted to keep applicant records.");
+      }
       if (error) {
         if (error.code === "23503") {
           await sb.from("jobs").update({ status: "closed" }).eq("id", id);

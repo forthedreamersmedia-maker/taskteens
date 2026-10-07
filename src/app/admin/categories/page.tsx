@@ -1,4 +1,5 @@
 "use client";
+import { safetySupabase } from "@/lib/safety/client";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { AdminShell } from "@/components/dashboard/admin-shell";
@@ -41,6 +42,11 @@ export default function CategoriesPage() {
               <li key={c.slug} className="flex items-center justify-between gap-3 px-4 py-3">
                 <span className="flex items-center gap-3"><CategoryIcon name={c.icon} className="h-5 w-5 text-navy-400" /><span><span className="font-medium">{c.name}</span><span className="block text-xs text-navy-500">{c.description}</span></span></span>
                 <span className="flex items-center gap-2">
+                  <label className="sr-only" htmlFor={`pol-${c.slug}`}>Pilot policy for {c.name}</label>
+                  <select id={`pol-${c.slug}`} className="input w-auto py-1 text-xs" value={c.pilot_policy ?? "review"} disabled={c.slug === "childcare-support" || !safetySupabase()}
+                    onChange={(e) => { const sb = safetySupabase(); if (sb) run(async () => { const { error } = await sb.rpc("admin_set_category_policy", { p_slug: c.slug, p_policy: e.target.value, p_note: "Changed in admin categories" }); if (error) throw new Error(error.message); }, "Pilot policy updated", () => reload(true)); }}>
+                    <option value="allowed">Allowed</option><option value="review">Moderator review</option><option value="prohibited">Prohibited</option>
+                  </select>
                   <Badge tone={c.active ? "green" : "gray"}>{c.active ? "Active" : "Hidden"}</Badge>
                   <button className="btn-outline btn-sm" onClick={() => run(() => data.adminUpsertCategory({ ...c, active: !c.active }), c.active ? "Category hidden" : "Category activated", () => reload(true))}>{c.active ? "Deactivate" : "Activate"}</button>
                 </span>

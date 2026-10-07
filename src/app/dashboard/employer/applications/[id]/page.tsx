@@ -1,5 +1,5 @@
 "use client";
-import { ArrowLeft, Ban, CalendarPlus, Check, CheckCircle2, ClipboardCheck, ExternalLink, FileText, Lock, Mail, Phone, ThumbsDown, X } from "lucide-react";
+import { ArrowLeft, Ban, CalendarPlus, Check, CheckCircle2, ClipboardCheck, ExternalLink, FileText, Lock, ThumbsDown, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -43,7 +43,7 @@ export default function ApplicationDetail() {
   if (loading) return <EmployerShell title="Application"><PageLoader /></EmployerShell>;
   if (!app) return <EmployerShell title="Application"><EmptyState title="Application not found" body="It may belong to a different employer account." action={{ label: "All applicants", href: "/dashboard/employer/applications" }} /></EmployerShell>;
 
-  const withdrawn = app.status === "withdrawn";
+  const withdrawn = ["withdrawn", "parent_declined", "cancelled"].includes(app.status);
   const completed = !!app.completed_at;
   const portfolio = safeUrl(app.portfolio_url);
 
@@ -75,7 +75,7 @@ export default function ApplicationDetail() {
       <Link href={`/dashboard/employer/applications?job=${app.job_id}`} className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-navy-500 hover:text-navy-800">
         <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Applicants for this job
       </Link>
-      {withdrawn && <Alert tone="warn" className="mb-5">The applicant withdrew this application.</Alert>}
+      {withdrawn && <Alert tone="warn" className="mb-5">{app.status === "withdrawn" ? "This application was withdrawn." : app.status === "parent_declined" ? "The teen\u2019s parent declined this job." : "This job was cancelled."}</Alert>}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-6">
@@ -84,14 +84,12 @@ export default function ApplicationDetail() {
             <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
               <div><dt className="text-xs text-navy-400">Age range</dt><dd className="font-medium">{app.age_range}</dd></div>
               <div><dt className="text-xs text-navy-400">City</dt><dd className="font-medium">{app.city}</dd></div>
-              <div><dt className="text-xs text-navy-400">Email</dt><dd><a href={`mailto:${app.applicant_email}`} className="link inline-flex items-center gap-1"><Mail className="h-3.5 w-3.5" aria-hidden="true" />{app.applicant_email}</a></dd></div>
-              <div><dt className="text-xs text-navy-400">Phone</dt><dd><a href={`tel:${app.applicant_phone}`} className="link inline-flex items-center gap-1"><Phone className="h-3.5 w-3.5" aria-hidden="true" />{app.applicant_phone}</a></dd></div>
               <div><dt className="text-xs text-navy-400">Availability</dt><dd>{app.availability}</dd></div>
               <div><dt className="text-xs text-navy-400">Transportation</dt><dd>{TRANSPORTATION_LABEL[app.transportation]}</dd></div>
               <div><dt className="text-xs text-navy-400">Work permit</dt><dd>{WORK_PERMIT_LABEL[app.work_permit_status]}</dd></div>
               <div><dt className="text-xs text-navy-400">Guardian consent</dt><dd>{GUARDIAN_CONSENT_LABEL[app.guardian_consent_status]}</dd></div>
             </dl>
-            <p className="mt-4 flex items-center gap-1.5 text-xs text-navy-400"><Lock className="h-3.5 w-3.5" aria-hidden="true" /> Contact details are private to you. Use them only for this job.</p>
+            <p className="mt-4 flex items-center gap-1.5 text-xs text-navy-400"><Lock className="h-3.5 w-3.5" aria-hidden="true" /> Teens&apos; phone numbers and emails are not shared. Message the applicant in TaskTeens — their parent or guardian can read every message.</p>
           </section>
 
           <section className="card space-y-4 p-5 sm:p-6" aria-labelledby="answers">
@@ -135,13 +133,25 @@ export default function ApplicationDetail() {
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
           <div className="card space-y-2 p-5">
             <h2 className="font-bold">Update status</h2>
+            <a href="/dashboard/employer/messages" className="btn-outline btn-sm w-full">Message the applicant (parent can read)</a>
             <p className="text-xs text-navy-500">The applicant gets an in-app notification and an email for each change.</p>
             <button type="button" disabled={withdrawn || completed || busy} onClick={() => setInterviewOpen(true)} className="btn-primary w-full"><CalendarPlus className="h-4 w-4" aria-hidden="true" /> Request interview</button>
-            <button type="button" disabled={withdrawn || completed || busy || app.status === "selected"} onClick={() => setDecision("selected")} className="btn w-full bg-emerald-600 text-white hover:bg-emerald-700"><Check className="h-4 w-4" aria-hidden="true" /> Select applicant</button>
-            <button type="button" disabled={withdrawn || completed || busy || app.status === "not_selected"} onClick={() => setDecision("not_selected")} className="btn-outline w-full"><ThumbsDown className="h-4 w-4" aria-hidden="true" /> Decline</button>
+            <button type="button" disabled={withdrawn || completed || busy || ["selected", "confirmed"].includes(app.status)} onClick={() => setDecision("selected")} className="btn w-full bg-emerald-600 text-white hover:bg-emerald-700"><Check className="h-4 w-4" aria-hidden="true" /> Select applicant</button>
+            <button type="button" disabled={withdrawn || completed || busy || ["not_selected", "confirmed", "parent_declined", "cancelled"].includes(app.status)} onClick={() => setDecision("not_selected")} className="btn-outline w-full"><ThumbsDown className="h-4 w-4" aria-hidden="true" /> Decline</button>
             {app.status === "submitted" && <button type="button" disabled={busy} onClick={() => changeStatus("viewed")} className="btn-ghost w-full">Mark as viewed</button>}
           </div>
           {app.status === "selected" && (
+            <Alert tone="info" title="Awaiting parent approval">
+              The teen&apos;s parent or guardian must approve this job before it&apos;s confirmed. The exact work address is shared with the teen only after approval.
+            </Alert>
+          )}
+          {app.status === "confirmed" && !completed && (
+            <div className="card space-y-2 p-5">
+              <Alert tone="success" title="Confirmed by the teen's parent">The teen and their parent can now see the service address and job time.</Alert>
+              <button type="button" disabled={busy} className="btn-outline btn-sm w-full" onClick={() => { if (window.confirm("Cancel this confirmed job? The teen and their parent are notified.")) changeStatus("cancelled"); }}>Cancel this job</button>
+            </div>
+          )}
+          {app.status === "confirmed" && (
             <div className="card space-y-3 p-5">
               <h2 className="flex items-center gap-2 font-bold"><ClipboardCheck className="h-4 w-4 text-navy-400" aria-hidden="true" /> Job completion</h2>
               {!completed ? (
@@ -199,7 +209,7 @@ export default function ApplicationDetail() {
       </div>
 
       <Modal open={!!decision} onClose={() => setDecision(null)} title={decision === "selected" ? `Select ${app.applicant_name.split(" ")[0]}?` : "Decline this applicant?"} description="They'll be notified right away.">
-        <Field label="Message to the applicant" optional hint={decision === "selected" ? "Next steps, start date, what to bring. Share an exact address only as needed." : "A short, kind note goes a long way."}>
+        <Field label="Message to the applicant" optional hint={decision === "selected" ? "Sent as a TaskTeens message (the teen's parent can read it). Don't include phone numbers or addresses — the address is shared automatically after parent approval." : "Sent as a TaskTeens message. A short, kind note goes a long way."}>
           <textarea className="input min-h-[100px]" value={message} onChange={(e) => setMessage(e.target.value)} maxLength={1000} />
         </Field>
         <div className="mt-5 flex justify-end gap-2">

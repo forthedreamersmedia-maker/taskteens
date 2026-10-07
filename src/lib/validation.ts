@@ -20,8 +20,6 @@ export const applicationSchema = z
     applicant_name: z.string().trim().min(2, "Enter your first and last name.").max(80),
     age_range: z.enum(["14-15", "16-17", "18-19"], { errorMap: () => ({ message: "Choose your age range." }) }),
     city: z.string().trim().min(2, "Enter the city you live in (no street address)."),
-    applicant_email: z.string().trim().email("Enter a valid email address."),
-    applicant_phone: z.string().trim().regex(phoneRegex, "Enter a valid phone number, e.g. (510) 555-0123."),
     experience: noSensitive("your experience").pipe(z.string().trim().min(10, "Tell the employer a little about your experience (at least 10 characters). School, clubs and volunteering count!").max(1500)),
     skills: z.array(z.string()).min(1, "Add at least one skill."),
     availability: z.string().trim().min(3, "Tell the employer when you're available.").max(500),
@@ -82,8 +80,26 @@ export const jobSchema = z
     transportation: z.enum(["none_needed", "transit_accessible", "bike_or_walk", "own_transportation", "employer_provides"]),
     transportation_notes: z.string().nullable(),
     status: z.enum(["draft", "published", "paused", "closed", "removed"]),
+    start_time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable().optional(),
+    duration_minutes: z.coerce.number().int().min(15).max(600).nullable().optional(),
+    work_setting: z.enum(["outdoor", "indoor_adult_present", "remote", "public_place"]).nullable().optional(),
+    supervision: z.string().trim().max(500).nullable().optional(),
+    equipment: z.string().trim().max(500).nullable().optional(),
+    known_risks: z.string().trim().max(500).nullable().optional(),
+    address_id: z.string().uuid().nullable().optional(),
   })
   .superRefine((v, ctx) => {
+    if (v.status === "published") {
+      if (!v.start_date) ctx.addIssue({ code: "custom", path: ["start_date"], message: "Add the date of the job." });
+      if (!v.start_time) ctx.addIssue({ code: "custom", path: ["start_time"], message: "Add a start time." });
+      if (!v.duration_minutes) ctx.addIssue({ code: "custom", path: ["duration_minutes"], message: "How long will it take?" });
+      if (!v.work_setting) ctx.addIssue({ code: "custom", path: ["work_setting"], message: "Choose where the work happens." });
+      if (!v.supervision?.trim()) ctx.addIssue({ code: "custom", path: ["supervision"], message: "Describe who supervises and how." });
+      else if (v.work_setting === "indoor_adult_present" && !/adult/i.test(v.supervision)) ctx.addIssue({ code: "custom", path: ["supervision"], message: "Indoor jobs need an adult present — say who will be there." });
+      if (v.equipment == null || !v.equipment.trim()) ctx.addIssue({ code: "custom", path: ["equipment"], message: "List equipment (or “None”)." });
+      if (v.known_risks == null || !v.known_risks.trim()) ctx.addIssue({ code: "custom", path: ["known_risks"], message: "List known risks (or “None known”)." });
+      if (v.work_setting !== "remote" && !v.address_id) ctx.addIssue({ code: "custom", path: ["address_id"], message: "Choose your reviewed service address." });
+    }
     if (v.opportunity_type === "volunteer" && v.pay_type !== "unpaid")
       ctx.addIssue({ code: "custom", path: ["pay_type"], message: "Volunteer roles are unpaid. Post it as a paid job or internship instead." });
     if (v.opportunity_type === "job" && v.pay_type === "unpaid")
@@ -107,7 +123,7 @@ export const signUpSchema = z.object({
     .min(8, "Use at least 8 characters.")
     .regex(/[A-Za-z]/, "Include at least one letter.")
     .regex(/\d/, "Include at least one number."),
-  role: z.enum(["teen", "employer"], { errorMap: () => ({ message: "Choose an account type." }) }),
+  role: z.enum(["teen", "employer", "parent"], { errorMap: () => ({ message: "Choose an account type." }) }),
   agree: z.literal(true, { errorMap: () => ({ message: "You must accept the Terms and Community Guidelines." }) }),
   age_confirm: z.boolean().optional(),
 });

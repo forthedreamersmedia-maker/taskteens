@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { dispatchDue } from "@/lib/safety/dispatch";
 import { applicationSchema, fieldErrors } from "@/lib/validation";
 import { getServerSupabase, getServiceSupabase } from "@/lib/supabase/server";
 import { employerNewApplicationEmail, teenConfirmationEmail } from "@/lib/email/templates";
@@ -9,7 +10,8 @@ import { isDemoMode, SITE_URL } from "@/lib/config";
  * POST /api/applications
  * Creates an application as the signed-in teen (RLS + triggers route it to the
  * job's employer), then sends the employer notification + teen confirmation emails.
- * No platform operator is involved.
+ * Teen contact details are NOT stored on the application or shown to employers —
+ * all communication happens in TaskTeens messages, which the teen's parent can see.
  */
 export async function POST(req: Request) {
   if (isDemoMode) return NextResponse.json({ error: "Demo mode handles applications in the browser." }, { status: 400 });
@@ -29,8 +31,6 @@ export async function POST(req: Request) {
     teen_id: auth.user.id,
     employer_id: auth.user.id, // placeholder — overwritten by trigger from the job
     applicant_name: v.applicant_name,
-    applicant_email: v.applicant_email,
-    applicant_phone: v.applicant_phone,
     age_range: v.age_range,
     city: v.city,
     experience: v.experience,
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
   const employerName = (job?.employer as unknown as { display_name: string } | null)?.display_name ?? "the employer";
   const first = v.applicant_name.split(" ")[0] ?? v.applicant_name;
   const emails: Promise<unknown>[] = [
-    sendEmail(teenConfirmationEmail({ to: v.applicant_email, site: SITE_URL, teenFirstName: first, jobTitle, employerName })),
+    sendEmail(teenConfirmationEmail({ to: auth.user.email ?? "", site: SITE_URL, teenFirstName: first, jobTitle, employerName })),
   ];
   if (admin) {
     const { data: emp } = await admin.from("users").select("email").eq("id", app.employer_id).single();
@@ -85,5 +85,6 @@ export async function POST(req: Request) {
   }
   await Promise.allSettled(emails);
 
+  { const svc = getServiceSupabase(); if (svc) after(() => dispatchDue(svc, 15).catch((e) => console.error("[dispatch]", e))); }
   return NextResponse.json({ application: app });
 }

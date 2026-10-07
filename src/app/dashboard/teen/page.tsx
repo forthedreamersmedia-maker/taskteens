@@ -2,6 +2,7 @@
 import { ArrowRight, Bookmark, CalendarCheck, FileText, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { TeenShell } from "@/components/dashboard/teen-shell";
+import { ParentLinkCard } from "@/components/safety/parent-link-card";
 import { NotificationList } from "@/components/dashboard/notification-list";
 import { Section, StatCard } from "@/components/layout/dashboard-shell";
 import { JobGrid } from "@/components/jobs/job-card";
@@ -21,11 +22,12 @@ export default function TeenOverview() {
   }, []);
   const { saved, toggle } = useSavedJobs();
   const completion = teenProfileCompletion(bundle?.profile);
-  const active = bundle?.apps.filter((a) => !["withdrawn", "not_selected"].includes(a.status)) ?? [];
+  const active = bundle?.apps.filter((a) => !["withdrawn", "not_selected", "parent_declined", "cancelled"].includes(a.status)) ?? [];
   const upcoming = bundle?.interviews.filter((i) => i.status === "proposed" || (i.status === "accepted" && i.confirmed_time && i.confirmed_time > new Date().toISOString())) ?? [];
 
   return (
     <TeenShell title={`Hi, ${session?.user.full_name.split(" ")[0] ?? "there"}`} subtitle="Here's what's happening with your job search." actions={<Link href="/jobs" className="btn-primary">Find jobs</Link>}>
+      <div className="mb-5"><ParentLinkCard /></div>
       {/* Profile completion */}
       <div className="card flex flex-col gap-5 p-5 sm:flex-row sm:items-center">
         <div className="relative h-20 w-20 shrink-0" role="img" aria-label={`Profile ${completion.percent}% complete`}>
@@ -52,7 +54,7 @@ export default function TeenOverview() {
         <StatCard label="Active applications" value={loading ? "–" : active.length} icon={FileText} tone="blue" />
         <StatCard label="Interviews" value={loading ? "–" : upcoming.length} icon={CalendarCheck} tone="coral" />
         <StatCard label="Saved jobs" value={saved.size} icon={Bookmark} />
-        <StatCard label="Selected" value={loading ? "–" : bundle?.apps.filter((a) => a.status === "selected").length ?? 0} icon={Sparkles} tone="green" />
+        <StatCard label="Confirmed jobs" value={loading ? "–" : bundle?.apps.filter((a) => a.status === "confirmed").length ?? 0} icon={Sparkles} tone="green" />
       </div>
 
       {upcoming.length > 0 && (

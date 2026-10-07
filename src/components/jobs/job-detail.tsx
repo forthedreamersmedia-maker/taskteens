@@ -3,6 +3,9 @@ import { ArrowLeft, Ban, BadgeCheck, Bus, CalendarDays, CheckCircle2, Clock, Ext
 import Link from "next/link";
 import { useState } from "react";
 import { Badge, DemoBadge, StatusBadge, VerifiedBadge } from "@/components/ui/badge";
+import { EmployerIndicators } from "@/components/safety/employer-indicators";
+import { WORK_SETTING_LABEL } from "@/lib/constants";
+import { formatDuration, formatTime } from "@/lib/safety/format";
 import { EmptyState, ErrorState, PageLoader } from "@/components/ui/feedback";
 import { SafeImage } from "@/components/ui/image";
 import { useToast } from "@/components/ui/toast";
@@ -62,12 +65,19 @@ export function JobDetail({ id }: { id: string }) {
 
   const facts = [
     { icon: Wallet, label: "Compensation", value: job.pay_type === "unpaid" ? formatPay(job) : `${formatPay(job)} · ${PAY_TYPE_LABEL[job.pay_type]}`, sub: job.pay_type === "unpaid" ? "Posted by a nonprofit, school, public agency or community group." : undefined },
-    { icon: MapPin, label: "Location", value: job.work_mode === "remote" ? "Remote" : `${job.neighborhood ? `${job.neighborhood}, ` : ""}${job.city}`, sub: job.work_mode !== "remote" ? "Approximate area only. Exact location is shared by the employer later in the hiring process." : undefined },
+    { icon: MapPin, label: "Location", value: job.work_mode === "remote" ? "Remote" : `${job.neighborhood ? `${job.neighborhood}, ` : ""}${job.city}`, sub: job.work_mode !== "remote" ? "Approximate area only. The exact address is shared with the teen and their parent only after the parent approves this job." : undefined },
     { icon: Clock, label: "Schedule", value: job.schedule, sub: `${RECURRENCE_LABEL[job.recurrence]} · ${WORK_MODE_LABEL[job.work_mode]}` },
     { icon: UserRound, label: "Minimum age", value: `${job.min_age}+` },
     { icon: CalendarDays, label: "Start date", value: formatDate(job.start_date) },
     { icon: Users, label: "Openings", value: String(job.openings) },
+    ...(job.start_time ? [{ icon: Clock, label: "Start time", value: formatTime(job.start_time), sub: job.duration_minutes ? `About ${formatDuration(job.duration_minutes)}` : undefined }] : []),
+    ...(job.work_setting ? [{ icon: MapPin, label: "Work setting", value: WORK_SETTING_LABEL[job.work_setting] }] : []),
   ];
+  const safety = [
+    { label: "Supervision", value: job.supervision },
+    { label: "Equipment", value: job.equipment },
+    { label: "Known risks", value: job.known_risks },
+  ].filter((x) => x.value);
 
   return (
     <div className="container-page py-8 lg:py-12">
@@ -100,6 +110,7 @@ export function JobDetail({ id }: { id: string }) {
             <VerifiedBadge status={job.employer.verification_status} />
           </p>
           <RatingInline rating={rating} className="mt-1.5 text-sm" />
+          <EmployerIndicators employerId={job.employer_id} verificationStatus={job.employer.verification_status} className="mt-4" />
 
           <dl className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {facts.map((f) => (
@@ -128,6 +139,20 @@ export function JobDetail({ id }: { id: string }) {
                   </li>
                 ))}
               </ul>
+            </section>
+          )}
+
+          {safety.length > 0 && (
+            <section className="mt-8" aria-labelledby="job-safety">
+              <h2 id="job-safety" className="text-xl font-bold">Supervision &amp; safety</h2>
+              <dl className="mt-3 space-y-3">
+                {safety.map((x) => (
+                  <div key={x.label} className="rounded-2xl border border-navy-100 bg-white p-4">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-navy-400">{x.label}</dt>
+                    <dd className="mt-1 whitespace-pre-line text-navy-700">{x.value}</dd>
+                  </div>
+                ))}
+              </dl>
             </section>
           )}
 
