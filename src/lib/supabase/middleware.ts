@@ -8,6 +8,7 @@ const ROLE_PREFIX: { prefix: string; roles: string[] }[] = [
   { prefix: "/dashboard/employer", roles: ["employer"] },
   { prefix: "/dashboard/parent", roles: ["parent"] },
   { prefix: "/onboarding/employer", roles: ["employer"] },
+  { prefix: "/incidents", roles: ["teen", "parent", "employer", "admin"] },
 ];
 
 /** Refreshes the Supabase session cookie and enforces role-based route access server-side. */

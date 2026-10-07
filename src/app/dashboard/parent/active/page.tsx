@@ -87,7 +87,7 @@ export default function ParentActive() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {phone ? <a href={`tel:${phone}`} className="btn-outline"><Phone className="h-4 w-4" aria-hidden="true" /> Call {j.teen_name.split(" ")[0]}</a> : <span className="text-xs text-navy-400">No phone number on your teen&apos;s account.</span>}
-                  <Link href={`/report?type=application&id=${j.application_id}&severity=urgent`} className="btn-outline"><Flag className="h-4 w-4" aria-hidden="true" /> Report an incident</Link>
+                  <Link href={`/incidents/new?application=${j.application_id}`} className="btn-outline"><Flag className="h-4 w-4" aria-hidden="true" /> Report an incident</Link>
                 </div>
                 {(j.window_open || j.open_alert_id) && <PushToTalk teenId={j.teen_id} otherLabel={j.teen_name.split(" ")[0]!} callHref={phone ? `tel:${phone}` : null} />}
               </section>

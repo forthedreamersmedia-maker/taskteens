@@ -1,5 +1,5 @@
 "use client";
-import { Bell, CalendarCheck, ClipboardList, Inbox, LayoutDashboard, Plus, Settings, ShieldCheck, MessageSquare } from "lucide-react";
+import { Bell, CalendarCheck, ClipboardList, Inbox, LayoutDashboard, Plus, Settings, ShieldCheck, MessageSquare, FileWarning } from "lucide-react";
 import Link from "next/link";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 
@@ -9,6 +9,7 @@ const NAV = [
   { href: "/dashboard/employer/applications", label: "Applicants", icon: Inbox },
   { href: "/dashboard/employer/messages", label: "Messages", icon: MessageSquare },
   { href: "/dashboard/employer/interviews", label: "Interviews", icon: CalendarCheck },
+  { href: "/incidents", label: "Reports", icon: FileWarning },
   { href: "/dashboard/employer/notifications", label: "Notifications", icon: Bell },
   { href: "/dashboard/employer/verification", label: "Verification", icon: ShieldCheck },
   { href: "/dashboard/employer/settings", label: "Account", icon: Settings },

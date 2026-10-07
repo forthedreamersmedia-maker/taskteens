@@ -1,10 +1,11 @@
 "use client";
-import { BadgeCheck, ClipboardList, FileClock, Flag, LayoutDashboard, MailWarning, MessageSquareWarning, Settings2, ShieldAlert, Star, Tags, Users } from "lucide-react";
+import { BadgeCheck, ClipboardList, FileWarning, FileClock, Flag, LayoutDashboard, MailWarning, MessageSquareWarning, Settings2, ShieldAlert, Star, Tags, Users } from "lucide-react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 
 const NAV = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/admin/safety", label: "Safety alerts", icon: ShieldAlert },
+  { href: "/admin/incidents", label: "Incidents", icon: FileWarning },
   { href: "/admin/reports", label: "Reports & safety", icon: Flag },
   { href: "/admin/moderation", label: "Message flags", icon: MessageSquareWarning },
   { href: "/admin/deliveries", label: "Email & SMS delivery", icon: MailWarning },

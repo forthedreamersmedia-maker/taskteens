@@ -116,7 +116,7 @@ function Thread({ conv, role, myId, onBack, onChanged }: { conv: Conv; role: "te
           <p className="mt-1 flex items-center gap-1 text-[11px] text-navy-400"><ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" /> The teen&apos;s parent or guardian can read this conversation. Messages can&apos;t be deleted.</p>
         </div>
         <div className="flex gap-1.5">
-          <Link href={`/report?type=application&id=${conv.application_id}`} className="btn-ghost btn-sm"><Flag className="h-4 w-4" aria-hidden="true" /> Report</Link>
+          <Link href={`/incidents/new?application=${conv.application_id}`} className="btn-ghost btn-sm"><Flag className="h-4 w-4" aria-hidden="true" /> Report</Link>
           {!conv.blocked && <button type="button" className="btn-ghost btn-sm" onClick={() => setBlockOpen(true)}><Ban className="h-4 w-4" aria-hidden="true" /> Block</button>}
         </div>
       </header>

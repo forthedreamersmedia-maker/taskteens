@@ -1,5 +1,6 @@
 "use client";
 import { Phone } from "lucide-react";
+import Link from "next/link";
 import { TeenShell } from "@/components/dashboard/teen-shell";
 import { RequiresBackend } from "@/components/safety/demo-notice";
 import { SosPanel } from "@/components/safety/sos";
@@ -23,7 +24,7 @@ export default function TeenHelp() {
           <li>You can leave any job at any time. You don&apos;t need permission and you won&apos;t get in trouble.</li>
           <li>Go somewhere public — a store, a neighbor&apos;s, a busy street — and call your parent.</li>
           <li>The employer is never told you sent an alert, and they can&apos;t see your location.</li>
-          <li>After you&apos;re safe, you can file a report from your application so TaskTeens can review what happened.</li>
+          <li>After you&apos;re safe, <Link className="link" href="/incidents/new">file a report</Link> so TaskTeens can review what happened. You can add photos or screenshots.</li>
         </ul>
       </section>
     </TeenShell>
